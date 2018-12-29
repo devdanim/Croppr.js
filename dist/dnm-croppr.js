@@ -1,2 +1,1492 @@
-!function(){for(var t=0,e=["ms","moz","webkit","o"],i=0;i<e.length&&!window.requestAnimationFrame;++i)window.requestAnimationFrame=window[e[i]+"RequestAnimationFrame"],window.cancelAnimationFrame=window[e[i]+"CancelAnimationFrame"]||window[e[i]+"CancelRequestAnimationFrame"];window.requestAnimationFrame||(window.requestAnimationFrame=function(e,i){var n=(new Date).getTime(),o=Math.max(0,16-(n-t)),s=window.setTimeout(function(){e(n+o)},o);return t=n+o,s}),window.cancelAnimationFrame||(window.cancelAnimationFrame=function(t){clearTimeout(t)})}(),function(){if("function"==typeof window.CustomEvent)return!1;function t(t,e){e=e||{bubbles:!1,cancelable:!1,detail:void 0};var i=document.createEvent("CustomEvent");return i.initCustomEvent(t,e.bubbles,e.cancelable,e.detail),i}t.prototype=window.Event.prototype,window.CustomEvent=t}(),function(t){try{return new CustomEvent("test"),!1}catch(t){}function e(e,i){i=i||{bubbles:!1,cancelable:!1};var n=document.createEvent("MouseEvent");return n.initMouseEvent(e,i.bubbles,i.cancelable,t,0,0,0,0,0,!1,!1,!1,!1,0,null),n}e.prototype=Event.prototype,t.MouseEvent=e}(window);var t=function(t,e,i,n){var o=this;function s(t){t.stopPropagation(),document.removeEventListener("mouseup",s),document.removeEventListener("mousemove",r),o.eventBus.dispatchEvent(new CustomEvent("handleend",{detail:{handle:o}}))}function r(t){t.stopPropagation(),o.eventBus.dispatchEvent(new CustomEvent("handlemove",{detail:{mouseX:t.clientX,mouseY:t.clientY}}))}this.position=t,this.constraints=e,this.cursor=i,this.eventBus=n,this.el=document.createElement("div"),this.el.className="croppr-handle",this.el.style.cursor=i,this.el.addEventListener("mousedown",function(t){t.stopPropagation(),document.addEventListener("mouseup",s),document.addEventListener("mousemove",r),o.eventBus.dispatchEvent(new CustomEvent("handlestart",{detail:{handle:o}}))})},e=function(t,e,i,n){this.x1=t,this.y1=e,this.x2=i,this.y2=n};function i(t){t.preventDefault();var e=t.changedTouches[0];e.target.dispatchEvent(new MouseEvent({touchstart:"mousedown",touchmove:"mousemove",touchend:"mouseup"}[t.type],{bubbles:!0,cancelable:!0,view:window,clientX:e.clientX,clientY:e.clientY,screenX:e.screenX,screenY:e.screenY}))}e.prototype.set=function(t,e,i,n){return void 0===t&&(t=null),void 0===e&&(e=null),void 0===i&&(i=null),void 0===n&&(n=null),this.x1=null==t?this.x1:t,this.y1=null==e?this.y1:e,this.x2=null==i?this.x2:i,this.y2=null==n?this.y2:n,this},e.prototype.width=function(){return Math.abs(this.x2-this.x1)},e.prototype.height=function(){return Math.abs(this.y2-this.y1)},e.prototype.resize=function(t,e,i){void 0===i&&(i=[0,0]);var n=this.x1+this.width()*i[0],o=this.y1+this.height()*i[1];return this.x1=n-t*i[0],this.y1=o-e*i[1],this.x2=this.x1+t,this.y2=this.y1+e,this},e.prototype.scale=function(t,e,i,n){void 0===e&&(e=[0,0]),void 0===i&&(i=null),void 0===n&&(n=null);var o=this.width()*t,s=this.height()*t;return this.resize(o,s,e),this},e.prototype.move=function(t,e){void 0===t&&(t=null),void 0===e&&(e=null);var i=this.width(),n=this.height();return e=null===e?this.y1:e,this.x1=t=null===t?this.x1:t,this.y1=e,this.x2=t+i,this.y2=e+n,this},e.prototype.getRelativePoint=function(t){return void 0===t&&(t=[0,0]),[this.width()*t[0],this.height()*t[1]]},e.prototype.getAbsolutePoint=function(t){return void 0===t&&(t=[0,0]),[this.x1+this.width()*t[0],this.y1+this.height()*t[1]]},e.prototype.getRatio=function(t,e){if(void 0===t&&(t=null),void 0===e&&(e=null),null===t)return null;if(null===e)return t;var i=this.width()/this.height();if(t>e){var n=t;t=e,e=n}return i>e?e:i<t?t:i},e.prototype.constrainToRatio=function(t,e,i,n){if(void 0===t&&(t=null),void 0===e&&(e=[0,0]),void 0===i&&(i="height"),void 0===n&&(n=null),null!==t){var o=this.width(),s=this.height();if(null!==n){var r=t;r>n&&(r=n,n=t);var h=o/s;if(h<r||h>n){var a=o,l=s;h>n?l=o/n:a=s*r,this.resize(a,l,e)}}else switch(i){case"height":this.resize(o,o/t,e);break;case"width":this.resize(s*t,s,e);break;default:this.resize(o,o/t,e)}return this}},e.prototype.constrainToBoundary=function(t,e,i){void 0===i&&(i=[0,0]);var n=this.getAbsolutePoint(i),o=n[0],s=n[1],r=o,h=s,a=t-o,l=e-s,u=-2*i[1]+1,p=[null,null],d=p[0],v=p[1];switch(-2*i[0]+1){case-1:d=r;break;case 0:d=2*Math.min(r,a);break;case 1:d=a}switch(u){case-1:v=h;break;case 0:v=2*Math.min(h,l);break;case 1:v=l}if(this.width()>d){var c=d/this.width();this.scale(c,i)}if(this.height()>v){var m=v/this.height();this.scale(m,i)}return this},e.prototype.constrainToSize=function(t,e,i,n,o,s,r){void 0===t&&(t=null),void 0===e&&(e=null),void 0===i&&(i=null),void 0===n&&(n=null),void 0===o&&(o=[0,0]),void 0===s&&(s=null),void 0===r&&(r=null);var h=this.getRatio(s,r);if(t&&this.width()>t){var a=t,l=null===h?this.height():t/h;this.resize(a,l,o)}if(e&&this.height()>e){var u=null===h?this.width():e*h;this.resize(u,e,o)}if(i&&this.width()<i){var p=i,d=null===h?this.height():i/h;this.resize(p,d,o)}if(n&&this.height()<n){var v=null===h?this.width():n*h;this.resize(v,n,o)}return this};var n=[{position:[0,0],constraints:[1,0,0,1],cursor:"nw-resize"},{position:[.5,0],constraints:[1,0,0,0],cursor:"n-resize"},{position:[1,0],constraints:[1,1,0,0],cursor:"ne-resize"},{position:[1,.5],constraints:[0,1,0,0],cursor:"e-resize"},{position:[1,1],constraints:[0,1,1,0],cursor:"se-resize"},{position:[.5,1],constraints:[0,0,1,0],cursor:"s-resize"},{position:[0,1],constraints:[0,0,1,1],cursor:"sw-resize"},{position:[0,.5],constraints:[0,0,0,1],cursor:"w-resize"}],o=function t(e,i,n){var o=this;if(void 0===n&&(n=!1),i.preview&&(i.preview=this.getElement(i.preview)),this.options=t.parseOptions(i||{}),!(e=this.getElement(e)).getAttribute("src"))throw"Image src not provided.";this._initialized=!1,this._restore={parent:e.parentNode,element:e},this.options.preview&&(this._restore.preview=this.options.preview,this._restore.parentPreview=this.options.preview.parentNode),n||(0===e.width||0===e.height?e.onload=function(){o.initialize(e)}:this.initialize(e))};o.prototype.initialize=function(t){var e=this;if(this.createDOM(t),this.getSourceSize(),this.options.convertToPixels(this.imageEl,this.sourceSize),this.attachHandlerEvents(),this.attachRegionEvents(),this.attachOverlayEvents(),this.initializeBox(),this.redraw(),this._initialized=!0,null!==this.options.onInitialize&&this.options.onInitialize(this),this.resizePreview(),this.cropperEl.onwheel=function(t){t.preventDefault();var i=t.deltaY,n=i>0?1:-1;i=Math.abs(i)/100,e.scaleBy(i=1+n*(i=i>.05?.05:i))},this.options.responsive){var i;window.onresize=function(){clearTimeout(i),i=setTimeout(function(){!function(){for(var t=e.options,i=e.responsiveData,n=["x","y","width","height"],s=0;s<n.length;s++)i[n[s]]*=100,i[n[s]]=i[n[s]]>100?100:i[n[s]]<0?0:i[n[s]];t.startPosition=[i.x,i.y,"%"],t.startSize=[i.width,i.height,"%"],(t=o.parseOptions(t)).convertToPixels(e.imageEl,e.sourceSize),e.initializeBox(t),e.redraw()}()},100)}}},o.prototype.getElement=function(t,e){if(t&&!t.nodeName&&null==(t=document.querySelector(t)))throw"Unable to find element.";return t},o.prototype.createDOM=function(e){var o;this.containerEl=document.createElement("div"),this.containerEl.className="croppr-container",this.eventBus=this.containerEl,(o=this.containerEl).addEventListener("touchstart",i),o.addEventListener("touchend",i),o.addEventListener("touchmove",i),this.cropperEl=document.createElement("div"),this.cropperEl.className="croppr",this.imageEl=document.createElement("img"),this.imageEl.setAttribute("src",e.getAttribute("src")),this.imageEl.setAttribute("alt",e.getAttribute("alt")),this.imageEl.className="croppr-image",this.imageClippedEl=this.imageEl.cloneNode(),this.imageClippedEl.className="croppr-imageClipped",this.regionEl=document.createElement("div"),this.regionEl.className="croppr-region",this.overlayEl=document.createElement("div"),this.overlayEl.className="croppr-overlay";var s=document.createElement("div");s.className="croppr-handleContainer",this.handles=[];for(var r=0;r<n.length;r++){var h=new t(n[r].position,n[r].constraints,n[r].cursor,this.eventBus);this.handles.push(h),s.appendChild(h.el)}this.cropperEl.appendChild(this.imageEl),this.cropperEl.appendChild(this.imageClippedEl),this.cropperEl.appendChild(this.regionEl),this.cropperEl.appendChild(this.overlayEl),this.cropperEl.appendChild(s),this.containerEl.appendChild(this.cropperEl),e.parentElement.replaceChild(this.containerEl,e),this.setLivePreview()},o.prototype.setLivePreview=function(){if(this.options.preview){this.preview={},this.preview.parent=this.options.preview,this.preview.parent.style.position="relative";var t=document.createElement("div");this.preview.container=this.preview.parent.appendChild(t),this.preview.container.style.overflow="hidden",this.preview.container.style.position="absolute",this.preview.container.style.top="50%",this.preview.container.style.left="50%",this.preview.container.style.transform="translate(-50%, -50%)"}},o.prototype.resizePreview=function(t){if(void 0===t&&(t=null),null===t&&(t=this.getValue("ratio")),this.preview&&t.width&&t.height){var e=this.preview.parent.offsetWidth,i=this.preview.parent.offsetHeight,n=this.sourceSize.width*t.width,o=this.sourceSize.height*t.height,s=n/o,r=e,h=i;e/i>s?r=h*s:h=r/s,this.preview.container.style.width=r+"px",this.preview.container.style.height=h+"px";var a=this.sourceSize.width*r/n,l=this.sourceSize.height*h/o,u=-t.x*a,p=-t.y*l;this.preview.image.style.width=a+"px",this.preview.image.style.height=l+"px",this.preview.image.style.left=u+"px",this.preview.image.style.top=p+"px"}},o.prototype.strictlyConstrain=function(t,e){var i,n=this;void 0===t&&(t=null),void 0===e&&(e=null),null===e?(i=[[0,0],[1,1]],e=[.5,.5]):i=[e],null===t&&(t=this.options);var o=this.imageEl.getBoundingClientRect(),s=o.width,r=o.height;this.box.constrainToRatio(t.aspectRatio,e,"height",t.maxAspectRatio),this.box.constrainToSize(t.maxSize.width,t.maxSize.height,t.minSize.width,t.minSize.height,e,t.aspectRatio,t.maxAspectRatio),i.map(function(t){n.box.constrainToBoundary(s,r,t)})},o.prototype.setImage=function(t){var e=this;return this.imageEl.onload=function(){e.getSourceSize(),e.options.convertToPixels(e.imageEl,e.sourceSize),e.initializeBox(),e.redraw()},this.imageEl.src=t,this.imageClippedEl.src=t,this},o.prototype.destroy=function(){this._restore.parent.replaceChild(this._restore.element,this.containerEl),this.options.preview&&(this.preview.image.parentNode.removeChild(this.preview.image),this.preview.container.parentNode.removeChild(this.preview.container))},o.prototype.initializeBox=function(t){void 0===t&&(t=null),null===t&&(t=this.options);var i=t.startSize.width,n=t.startSize.height;t.minSize&&(i<t.minSize.width?i=t.minSize.width:i<t.maxSize.width&&(i=t.maxSize.width)),t.maxSize&&(n<t.minSize.height?n=t.minSize.height:n<t.maxSize.height&&(n=t.maxSize.height));var o=new e(0,0,i,n),s=0,r=0;if(null===t.startPosition){var h=this.imageEl.getBoundingClientRect();s=h.width/2-i/2,r=h.height/2-n/2}else s=t.startPosition.x,r=t.startPosition.y;if(o.move(s,r),this.preview){this.preview.image&&(this.preview.image.parentNode.removeChild(this.preview.image),this.preview.image=null);var a=document.createElement("img");a.src=this.imageEl.src,this.preview.image=this.preview.container.appendChild(a),this.preview.image.style.position="relative"}return this.box=o,this.strictlyConstrain(t),o},o.prototype.getSourceSize=function(){return this.sourceSize={},this.sourceSize.width=this.imageEl.naturalWidth,this.sourceSize.height=this.imageEl.naturalHeight,this.sourceSize},o.prototype.convertRealDataToPixel=function(t){var e=this.imageEl.getBoundingClientRect(),i=this.sourceSize.width/e.width,n=this.sourceSize.height/e.height;return t.width&&(t.width/=i),t.x&&(t.x/=i),t.height&&(t.height/=n),t.y&&(t.y/=n),t},o.prototype.redraw=function(){var t=this;this.resizePreview();var e=Math.round(this.box.width()),i=Math.round(this.box.height()),n=Math.round(this.box.x1),o=Math.round(this.box.y1),s=Math.round(this.box.x2),r=Math.round(this.box.y2);window.requestAnimationFrame(function(){t.regionEl.style.transform="translate("+n+"px, "+o+"px)",t.regionEl.style.width=e+"px",t.regionEl.style.height=i+"px",t.imageClippedEl.style.clip="rect("+o+"px, "+s+"px, "+r+"px, "+n+"px)";for(var h=t.box.getAbsolutePoint([.5,.5]),a=t.imageEl.getBoundingClientRect(),l=h[1]-a.height/2>>31,u=-2*((h[0]-a.width/2>>31^l)+l+l+4)+8,p=0;p<t.handles.length;p++){var d=t.handles[p],v=o+i*d.position[1]-d.el.offsetHeight/2;d.el.style.transform="translate("+Math.round(n+e*d.position[0]-d.el.offsetWidth/2)+"px, "+Math.round(v)+"px)",d.el.style.zIndex=u==p?5:4}})},o.prototype.attachHandlerEvents=function(){var t=this.eventBus;t.addEventListener("handlestart",this.onHandleMoveStart.bind(this)),t.addEventListener("handlemove",this.onHandleMoveMoving.bind(this)),t.addEventListener("handleend",this.onHandleMoveEnd.bind(this))},o.prototype.attachRegionEvents=function(){var t=this.eventBus;function e(e){e.stopPropagation(),t.dispatchEvent(new CustomEvent("regionmove",{detail:{mouseX:e.clientX,mouseY:e.clientY}}))}function i(n){n.stopPropagation(),document.removeEventListener("mouseup",i),document.removeEventListener("mousemove",e),t.dispatchEvent(new CustomEvent("regionend",{detail:{mouseX:n.clientX,mouseY:n.clientY}}))}this.regionEl.addEventListener("mousedown",function(n){n.stopPropagation(),document.addEventListener("mouseup",i),document.addEventListener("mousemove",e),t.dispatchEvent(new CustomEvent("regionstart",{detail:{mouseX:n.clientX,mouseY:n.clientY}}))}),t.addEventListener("regionstart",this.onRegionMoveStart.bind(this)),t.addEventListener("regionmove",this.onRegionMoveMoving.bind(this)),t.addEventListener("regionend",this.onRegionMoveEnd.bind(this))},o.prototype.attachOverlayEvents=function(){var t=4,i=this,n=null;function o(t){t.stopPropagation(),i.eventBus.dispatchEvent(new CustomEvent("handlemove",{detail:{mouseX:t.clientX,mouseY:t.clientY}}))}function s(t){t.stopPropagation(),document.removeEventListener("mouseup",s),document.removeEventListener("mousemove",o),1!==i.box.width()||1!==i.box.height()?i.eventBus.dispatchEvent(new CustomEvent("handleend",{detail:{mouseX:t.clientX,mouseY:t.clientY}})):i.box=n}this.overlayEl.addEventListener("mousedown",function(r){r.stopPropagation(),document.addEventListener("mouseup",s),document.addEventListener("mousemove",o);var h=i.cropperEl.getBoundingClientRect(),a=r.clientX-h.left,l=r.clientY-h.top;n=i.box,i.box=new e(a,l,a+1,l+1),i.eventBus.dispatchEvent(new CustomEvent("handlestart",{detail:{handle:i.handles[t]}}))})},o.prototype.onHandleMoveStart=function(t){var e=t.detail.handle,i=[1-e.position[0],1-e.position[1]],n=this.box.getAbsolutePoint(i);this.activeHandle={handle:e,originPoint:i,originX:n[0],originY:n[1]},null!==this.options.onCropStart&&this.options.onCropStart(this.getValue())},o.prototype.onHandleMoveMoving=function(t){var i=t.detail,n=i.mouseX,o=i.mouseY,s=this.cropperEl.getBoundingClientRect();(n-=s.left)<0?n=0:n>s.width&&(n=s.width),(o-=s.top)<0?o=0:o>s.height&&(o=s.height);var r=this.activeHandle.originPoint.slice(),h=this.activeHandle.originX,a=this.activeHandle.originY,l=this.activeHandle.handle,u=1===l.constraints[0],p=1===l.constraints[1],d=1===l.constraints[2],v=1===l.constraints[3],c=(v||p)&&(u||d),m=v||p?h:this.box.x1,g=v||p?h:this.box.x2,w=u||d?a:this.box.y1,f=u||d?a:this.box.y2;m=v?n:m,g=p?n:g,w=u?o:w,f=d?o:f;var E=[!1,!1],y=E[0],x=E[1];if((v||p)&&(y=v?n>h:n<h),(u||d)&&(x=u?o>a:o<a),y){var z=m;m=g,g=z,r[0]=1-r[0]}if(x){var b=w;w=f,f=b,r[1]=1-r[1]}var C=new e(m,w,g,f);if(this.options.aspectRatio){var S=this.options.aspectRatio,M=!1;c?M=o>C.y1+S*C.width()||o<C.y2-S*C.width():(u||d)&&(M=!0),C.constrainToRatio(S,r,M?"width":"height",this.options.maxAspectRatio)}C.constrainToSize(this.options.maxSize.width,this.options.maxSize.height,this.options.minSize.width,this.options.minSize.height,r,this.options.aspectRatio,this.options.maxAspectRatio);var P=this.imageEl.getBoundingClientRect(),B=P.width,A=P.height,L=[r];this.options.maxAspectRatio&&(L=[[0,0],[1,1]]),L.map(function(t){C.constrainToBoundary(B,A,t)}),this.box=C,this.redraw(),null!==this.options.onCropMove&&this.options.onCropMove(this.getValue())},o.prototype.onHandleMoveEnd=function(t){null!==this.options.onCropEnd&&this.options.onCropEnd(this.getValue())},o.prototype.onRegionMoveStart=function(t){var e=t.detail,i=e.mouseX,n=e.mouseY,o=this.cropperEl.getBoundingClientRect();this.currentMove={offsetX:(i-=o.left)-this.box.x1,offsetY:(n-=o.top)-this.box.y1},null!==this.options.onCropStart&&this.options.onCropStart(this.getValue())},o.prototype.onRegionMoveMoving=function(t){var e=t.detail,i=e.mouseX,n=e.mouseY,o=this.currentMove,s=o.offsetX,r=o.offsetY,h=this.cropperEl.getBoundingClientRect();this.box.move((i-=h.left)-s,(n-=h.top)-r),this.box.x1<0&&this.box.move(0,null),this.box.x2>h.width&&this.box.move(h.width-this.box.width(),null),this.box.y1<0&&this.box.move(null,0),this.box.y2>h.height&&this.box.move(null,h.height-this.box.height()),this.redraw(),null!==this.options.onCropMove&&this.options.onCropMove(this.getValue())},o.prototype.onRegionMoveEnd=function(t){null!==this.options.onCropEnd&&this.options.onCropEnd(this.getValue())},o.prototype.getValue=function(t){void 0===t&&(t=null),null===t&&(t=this.options.returnMode);var e={};return"real"==t?e=this.getValueAsRealData():"ratio"==t?e=this.getValueAsRatio():"raw"==t&&(e={x:Math.round(this.box.x1),y:Math.round(this.box.y1),width:Math.round(this.box.width()),height:Math.round(this.box.height())}),this.options.responsive&&(this.responsiveData="ratio"==t?e:this.getValueAsRatio()),e},o.prototype.getValueAsRealData=function(){var t=this.imageEl.naturalWidth,e=this.imageEl.naturalHeight,i=this.imageEl.getBoundingClientRect(),n=t/i.width,o=e/i.height;return{x:Math.round(this.box.x1*n),y:Math.round(this.box.y1*o),width:Math.round(this.box.width()*n),height:Math.round(this.box.height()*o)}},o.prototype.getValueAsRatio=function(){var t=this.imageEl.getBoundingClientRect(),e=t.width,i=t.height;return{x:this.box.x1/e,y:this.box.y1/i,width:this.box.width()/e,height:this.box.height()/i}},o.parseOptions=function(t){var e=null,i=null,n={width:null,height:null,unit:"px",real:!1},o={width:null,height:null,unit:"px",real:!1},s={width:100,height:100,unit:"%",real:!1},r=null,h="real",a=null,l=null,u=null,p=null,d=null,v=!0,c=null;null!==t.preview&&(c=t.preview);var m=null;null!==t.responsive&&(m=t.responsive);for(var g=null,w=null,f=["aspectRatio","maxAspectRatio"],E=0;E<f.length;E++)if(void 0!==t[f[E]])if("number"==typeof t[f[E]]){var y=t[f[E]];"aspectRatio"===f[E]?g=y:w=y}else if(t[f[E]]instanceof Array){var x=t[f[E]][1]/t[f[E]][0];"aspectRatio"===f[E]?g=x:w=x}var z=null;null!=t.maxSize&&(z={width:t.maxSize[0]||null,height:t.maxSize[1]||null,unit:t.maxSize[2]||"px",real:t.minSize[3]||!1});var b=null;null!=t.minSize&&(b={width:t.minSize[0]||null,height:t.minSize[1]||null,unit:t.minSize[2]||"px",real:t.minSize[3]||!1});var C=null;null!=t.startSize&&(C={width:t.startSize[0]||null,height:t.startSize[1]||null,unit:t.startSize[2]||"%",real:t.startSize[3]||!1});var S=null;null!=t.startPosition&&(S={x:t.startPosition[0]||null,y:t.startPosition[1]||null,unit:t.startPosition[2]||"%",real:t.startPosition[3]||!1});var M=null;"function"==typeof t.onInitialize&&(M=t.onInitialize);var P=null;"function"==typeof t.onCropStart&&(P=t.onCropStart);var B=null;"function"==typeof t.onCropEnd&&(B=t.onCropEnd);var A=null;"function"==typeof t.onUpdate&&(console.warn("Croppr.js: `onUpdate` is deprecated and will be removed in the next major release. Please use `onCropMove` or `onCropEnd` instead."),A=t.onUpdate),"function"==typeof t.onCropMove&&(A=t.onCropMove);var L=null;if(void 0!==t.returnMode){var Y=t.returnMode.toLowerCase();if(-1===["real","ratio","raw"].indexOf(Y))throw"Invalid return mode.";L=Y}var X=function(t,e,i){return i.width?i.width=i.width/100*t:i.x&&(i.x=i.x/100*t),i.height?i.height=i.height/100*e:i.y&&(i.y=i.y/100*e),i},T=function(t,e,i,n,o){var s=i/t,r=n/e;return o.width?o.width/=s:o.x&&(o.x/=s),o.height?o.height/=r:o.y&&(o.y/=r),o},V=function(t,e){return null!==t?t:e};return{aspectRatio:V(g,e),maxAspectRatio:V(w,i),maxSize:V(z,n),minSize:V(b,o),startSize:V(C,s),startPosition:V(S,r),returnMode:V(L,h),onInitialize:V(M,a),onCropStart:V(P,l),onCropMove:V(A,u),onCropEnd:V(B,p),preview:V(c,d),responsive:V(m,v),convertToPixels:function(t,e){void 0===e&&(e=null);for(var i=t.getBoundingClientRect(),n=i.width,o=i.height,s=["maxSize","minSize","startSize","startPosition"],r=0;r<s.length;r++){var h=s[r];null!==this[h]&&("%"==this[h].unit?this[h]=X(n,o,this[h]):!0===this[h].real&&e&&(this[h]=T(n,o,e.width,e.height,this[h])),delete this[h].unit)}if(this.minSize&&(this.minSize.width>n&&(this.minSize.width=n),this.minSize.height>o&&(this.minSize.height=o)),this.startSize&&this.startPosition){var a=this.startPosition.x+this.startSize.width;a>n&&(this.startPosition.x-=a-n);var l=this.startPosition.y+this.startSize.height;l>o&&(this.startPosition.y-=l-o)}}}},module.exports=function(t){function e(e,i,n){void 0===n&&(n=!1),t.call(this,e,i,n)}return t&&(e.__proto__=t),(e.prototype=Object.create(t&&t.prototype)).constructor=e,e.prototype.getValue=function(e){return t.prototype.getValue.call(this,e)},e.prototype.setImage=function(e){return t.prototype.setImage.call(this,e)},e.prototype.destroy=function(){return t.prototype.destroy.call(this)},e.prototype.moveTo=function(t,e,i){return void 0===i&&(i=!0),this.box.move(t,e),!0===i&&this.strictlyConstrain(),this.redraw(),null!==this.options.onCropEnd&&this.options.onCropEnd(this.getValue()),this},e.prototype.resizeTo=function(t,e,i,n){return void 0===i&&(i=null),void 0===n&&(n=!0),null===i?i=[.5,.5]:n=!1,this.box.resize(t,e,i),!0===n&&this.strictlyConstrain(),this.redraw(),null!==this.options.onCropEnd&&this.options.onCropEnd(this.getValue()),this},e.prototype.scaleBy=function(t,e,i){return void 0===e&&(e=null),void 0===i&&(i=!0),null===e?e=[.5,.5]:i=!1,this.box.scale(t,e),!0===i&&this.strictlyConstrain(),this.redraw(),null!==this.options.onCropEnd&&this.options.onCropEnd(this.getValue()),this},e.prototype.reset=function(){return this.box=this.initializeBox(this.options),this.redraw(),null!==this.options.onCropEnd&&this.options.onCropEnd(this.getValue()),this},e}(o);
-//# sourceMappingURL=dnm-croppr.js.map
+/**
+ * Fork from Croppr.js : https://github.com/jamesssooi/Croppr.js
+ * Original author : James Ooi. 
+ *
+ * A JavaScript image cropper that's lightweight, awesome, and has
+ * zero dependencies.
+ * 
+ * dnm-croppr : https://github.com/devdanim/dnm-croppr
+ * Fork author : Adrien du Repaire
+ *
+ * Released under the MIT License.
+ *
+ */
+
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.Croppr = factory());
+}(this, (function () { 'use strict';
+
+(function () {
+  var lastTime = 0;
+  var vendors = ['ms', 'moz', 'webkit', 'o'];
+  for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+    window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+    window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+  }
+  if (!window.requestAnimationFrame) window.requestAnimationFrame = function (callback, element) {
+    var currTime = new Date().getTime();
+    var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+    var id = window.setTimeout(function () {
+      callback(currTime + timeToCall);
+    }, timeToCall);
+    lastTime = currTime + timeToCall;
+    return id;
+  };
+  if (!window.cancelAnimationFrame) window.cancelAnimationFrame = function (id) {
+    clearTimeout(id);
+  };
+})();
+(function () {
+  if (typeof window.CustomEvent === "function") return false;
+  function CustomEvent(event, params) {
+    params = params || { bubbles: false, cancelable: false, detail: undefined };
+    var evt = document.createEvent('CustomEvent');
+    evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+    return evt;
+  }
+  CustomEvent.prototype = window.Event.prototype;
+  window.CustomEvent = CustomEvent;
+})();
+(function (window) {
+  try {
+    new CustomEvent('test');
+    return false;
+  } catch (e) {}
+  function MouseEvent(eventType, params) {
+    params = params || { bubbles: false, cancelable: false };
+    var mouseEvent = document.createEvent('MouseEvent');
+    mouseEvent.initMouseEvent(eventType, params.bubbles, params.cancelable, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    return mouseEvent;
+  }
+  MouseEvent.prototype = Event.prototype;
+  window.MouseEvent = MouseEvent;
+})(window);
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+
+
+var get = function get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
+    }
+
+    return getter.call(receiver);
+  }
+};
+
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+
+
+
+
+
+
+
+
+
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+
+
+
+
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
+var Handle =
+/**
+ * Creates a new Handle instance.
+ * @constructor
+ * @param {Array} position The x and y ratio position of the handle
+ *      within the crop region. Accepts a value between 0 to 1 in the order
+ *      of [X, Y].
+ * @param {Array} constraints Define the side of the crop region that
+ *      is to be affected by this handle. Accepts a value of 0 or 1 in the
+ *      order of [TOP, RIGHT, BOTTOM, LEFT].
+ * @param {String} cursor The CSS cursor of this handle.
+ * @param {Element} eventBus The element to dispatch events to.
+ */
+function Handle(position, constraints, cursor, eventBus) {
+  classCallCheck(this, Handle);
+  var self = this;
+  this.position = position;
+  this.constraints = constraints;
+  this.cursor = cursor;
+  this.eventBus = eventBus;
+  this.el = document.createElement('div');
+  this.el.className = 'croppr-handle';
+  this.el.style.cursor = cursor;
+  this.el.addEventListener('mousedown', onMouseDown);
+  function onMouseDown(e) {
+    e.stopPropagation();
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mousemove', onMouseMove);
+    self.eventBus.dispatchEvent(new CustomEvent('handlestart', {
+      detail: { handle: self }
+    }));
+  }
+  function onMouseUp(e) {
+    e.stopPropagation();
+    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('mousemove', onMouseMove);
+    self.eventBus.dispatchEvent(new CustomEvent('handleend', {
+      detail: { handle: self }
+    }));
+  }
+  function onMouseMove(e) {
+    e.stopPropagation();
+    self.eventBus.dispatchEvent(new CustomEvent('handlemove', {
+      detail: { mouseX: e.clientX, mouseY: e.clientY }
+    }));
+  }
+};
+
+var Box = function () {
+  /**
+   * Creates a new Box instance.
+   * @constructor
+   * @param {Number} x1
+   * @param {Number} y1
+   * @param {Number} x2
+   * @param {Number} y2
+   */
+  function Box(x1, y1, x2, y2) {
+    classCallCheck(this, Box);
+    this.x1 = x1;
+    this.y1 = y1;
+    this.x2 = x2;
+    this.y2 = y2;
+  }
+  /**
+   * Sets the new dimensions of the box.
+   * @param {Number} x1
+   * @param {Number} y1
+   * @param {Number} x2
+   * @param {Number} y2
+   */
+  createClass(Box, [{
+    key: 'set',
+    value: function set$$1() {
+      var x1 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var y1 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var x2 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var y2 = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+      this.x1 = x1 == null ? this.x1 : x1;
+      this.y1 = y1 == null ? this.y1 : y1;
+      this.x2 = x2 == null ? this.x2 : x2;
+      this.y2 = y2 == null ? this.y2 : y2;
+      return this;
+    }
+    /**
+     * Calculates the width of the box.
+     * @returns {Number}
+     */
+  }, {
+    key: 'width',
+    value: function width() {
+      return Math.abs(this.x2 - this.x1);
+    }
+    /**
+     * Calculates the height of the box.
+     * @returns {Number}
+     */
+  }, {
+    key: 'height',
+    value: function height() {
+      return Math.abs(this.y2 - this.y1);
+    }
+    /**
+     * Resizes the box to a new size.
+     * @param {Number} newWidth
+     * @param {Number} newHeight
+     * @param {Array} [origin] The origin point to resize from.
+     *      Defaults to [0, 0] (top left).
+     */
+  }, {
+    key: 'resize',
+    value: function resize(newWidth, newHeight) {
+      var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0, 0];
+      var fromX = this.x1 + this.width() * origin[0];
+      var fromY = this.y1 + this.height() * origin[1];
+      this.x1 = fromX - newWidth * origin[0];
+      this.y1 = fromY - newHeight * origin[1];
+      this.x2 = this.x1 + newWidth;
+      this.y2 = this.y1 + newHeight;
+      return this;
+    }
+    /**
+     * Scale the box by a factor.
+     * @param {Number} factor
+     * @param {Array} [origin] The origin point to resize from.
+     *      Defaults to [0, 0] (top left).
+     */
+  }, {
+    key: 'scale',
+    value: function scale(factor) {
+      var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0, 0];
+      var containerWidth = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var containerHeight = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+      var newWidth = this.width() * factor;
+      var newHeight = this.height() * factor;
+      this.resize(newWidth, newHeight, origin);
+      return this;
+    }
+  }, {
+    key: 'move',
+    value: function move() {
+      var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var width = this.width();
+      var height = this.height();
+      x = x === null ? this.x1 : x;
+      y = y === null ? this.y1 : y;
+      this.x1 = x;
+      this.y1 = y;
+      this.x2 = x + width;
+      this.y2 = y + height;
+      return this;
+    }
+    /**
+     * Get relative x and y coordinates of a given point within the box.
+     * @param {Array} point The x and y ratio position within the box.
+     * @returns {Array} The x and y coordinates [x, y].
+     */
+  }, {
+    key: 'getRelativePoint',
+    value: function getRelativePoint() {
+      var point = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [0, 0];
+      var x = this.width() * point[0];
+      var y = this.height() * point[1];
+      return [x, y];
+    }
+    /**
+     * Get absolute x and y coordinates of a given point within the box.
+     * @param {Array} point The x and y ratio position within the box.
+     * @returns {Array} The x and y coordinates [x, y].
+     */
+  }, {
+    key: 'getAbsolutePoint',
+    value: function getAbsolutePoint() {
+      var point = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [0, 0];
+      var x = this.x1 + this.width() * point[0];
+      var y = this.y1 + this.height() * point[1];
+      return [x, y];
+    }
+  }, {
+    key: 'getRatio',
+    value: function getRatio() {
+      var minRatio = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var maxRatio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      if (minRatio === null) return null;
+      if (maxRatio === null) return minRatio;
+      var imageRatio = this.width() / this.height();
+      if (minRatio > maxRatio) {
+        var tempRatio = minRatio;
+        minRatio = maxRatio;
+        maxRatio = tempRatio;
+      }
+      if (imageRatio > maxRatio) return maxRatio;else if (imageRatio < minRatio) return minRatio;else return imageRatio;
+    }
+    /**
+     * Constrain the box to a fixed ratio.
+     * @param {Number} ratio
+     * @param {Array} [origin] The origin point to resize from.
+     *     Defaults to [0, 0] (top left).
+     * @param {String} [grow] The axis to grow to maintain the ratio.
+     *     Defaults to 'height'.
+     */
+  }, {
+    key: 'constrainToRatio',
+    value: function constrainToRatio() {
+      var ratio = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0, 0];
+      var grow = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'height';
+      var maxRatio = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+      if (ratio === null) {
+        return;
+      }
+      var width = this.width();
+      var height = this.height();
+      if (maxRatio !== null) {
+        var minRatio = ratio;
+        if (minRatio > maxRatio) {
+          minRatio = maxRatio;
+          maxRatio = ratio;
+        }
+        var cropRatio = width / height;
+        if (cropRatio < minRatio || cropRatio > maxRatio) {
+          var constrainWidth = width;
+          var constrainHeight = height;
+          if (cropRatio > maxRatio) constrainHeight = width / maxRatio;else constrainWidth = height * minRatio;
+          this.resize(constrainWidth, constrainHeight, origin);
+        }
+      } else {
+        switch (grow) {
+          case 'height':
+            this.resize(width, width / ratio, origin);
+            break;
+          case 'width':
+            this.resize(height * ratio, height, origin);
+            break;
+          default:
+            this.resize(width, width / ratio, origin);
+        }
+      }
+      return this;
+    }
+    /**
+     * Constrain the box within a boundary.
+     * @param {Number} boundaryWidth
+     * @param {Number} boundaryHeight
+     * @param {Array} [origin] The origin point to resize from.
+     *     Defaults to [0, 0] (top left).
+     */
+  }, {
+    key: 'constrainToBoundary',
+    value: function constrainToBoundary(boundaryWidth, boundaryHeight) {
+      var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0, 0];
+      var _getAbsolutePoint = this.getAbsolutePoint(origin),
+          _getAbsolutePoint2 = slicedToArray(_getAbsolutePoint, 2),
+          originX = _getAbsolutePoint2[0],
+          originY = _getAbsolutePoint2[1];
+      var maxIfLeft = originX;
+      var maxIfTop = originY;
+      var maxIfRight = boundaryWidth - originX;
+      var maxIfBottom = boundaryHeight - originY;
+      var directionX = -2 * origin[0] + 1;
+      var directionY = -2 * origin[1] + 1;
+      var maxWidth = null,
+          maxHeight = null;
+      switch (directionX) {
+        case -1:
+          maxWidth = maxIfLeft;break;
+        case 0:
+          maxWidth = Math.min(maxIfLeft, maxIfRight) * 2;break;
+        case +1:
+          maxWidth = maxIfRight;break;
+      }
+      switch (directionY) {
+        case -1:
+          maxHeight = maxIfTop;break;
+        case 0:
+          maxHeight = Math.min(maxIfTop, maxIfBottom) * 2;break;
+        case +1:
+          maxHeight = maxIfBottom;break;
+      }
+      if (this.width() > maxWidth) {
+        var factor = maxWidth / this.width();
+        this.scale(factor, origin);
+      }
+      if (this.height() > maxHeight) {
+        var _factor = maxHeight / this.height();
+        this.scale(_factor, origin);
+      }
+      return this;
+    }
+    /**
+     * Constrain the box to a maximum/minimum size.
+     * @param {Number} [maxWidth]
+     * @param {Number} [maxHeight]
+     * @param {Number} [minWidth]
+     * @param {Number} [minHeight]
+     * @param {Array} [origin] The origin point to resize from.
+     *     Defaults to [0, 0] (top left).
+     * @param {Number} [ratio] Ratio to maintain.
+     */
+  }, {
+    key: 'constrainToSize',
+    value: function constrainToSize() {
+      var maxWidth = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var maxHeight = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var minWidth = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var minHeight = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+      var origin = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [0, 0];
+      var minRatio = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+      var maxRatio = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : null;
+      var ratio = this.getRatio(minRatio, maxRatio);
+      if (maxWidth && this.width() > maxWidth) {
+        var newWidth = maxWidth,
+            newHeight = ratio === null ? this.height() : maxWidth / ratio;
+        this.resize(newWidth, newHeight, origin);
+      }
+      if (maxHeight && this.height() > maxHeight) {
+        var _newWidth = ratio === null ? this.width() : maxHeight * ratio,
+            _newHeight = maxHeight;
+        this.resize(_newWidth, _newHeight, origin);
+      }
+      if (minWidth && this.width() < minWidth) {
+        var _newWidth2 = minWidth,
+            _newHeight2 = ratio === null ? this.height() : minWidth / ratio;
+        this.resize(_newWidth2, _newHeight2, origin);
+      }
+      if (minHeight && this.height() < minHeight) {
+        var _newWidth3 = ratio === null ? this.width() : minHeight * ratio,
+            _newHeight3 = minHeight;
+        this.resize(_newWidth3, _newHeight3, origin);
+      }
+      return this;
+    }
+  }]);
+  return Box;
+}();
+
+/**
+ * Binds an element's touch events to be simulated as mouse events.
+ * @param {Element} element
+ */
+function enableTouch(element) {
+  element.addEventListener('touchstart', simulateMouseEvent);
+  element.addEventListener('touchend', simulateMouseEvent);
+  element.addEventListener('touchmove', simulateMouseEvent);
+}
+/**
+ * Translates a touch event to a mouse event.
+ * @param {Event} e
+ */
+function simulateMouseEvent(e) {
+  e.preventDefault();
+  var touch = e.changedTouches[0];
+  var eventMap = {
+    'touchstart': 'mousedown',
+    'touchmove': 'mousemove',
+    'touchend': 'mouseup'
+  };
+  touch.target.dispatchEvent(new MouseEvent(eventMap[e.type], {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+    clientX: touch.clientX,
+    clientY: touch.clientY,
+    screenX: touch.screenX,
+    screenY: touch.screenY
+  }));
+}
+
+/**
+ * Define a list of handles to create.
+ *
+ * @property {Array} position - The x and y ratio position of the handle within
+ *      the crop region. Accepts a value between 0 to 1 in the order of [X, Y].
+ * @property {Array} constraints - Define the side of the crop region that is to
+ *      be affected by this handle. Accepts a value of 0 or 1 in the order of
+ *      [TOP, RIGHT, BOTTOM, LEFT].
+ * @property {String} cursor - The CSS cursor of this handle.
+ */
+var HANDLES = [{ position: [0.0, 0.0], constraints: [1, 0, 0, 1], cursor: 'nw-resize' }, { position: [0.5, 0.0], constraints: [1, 0, 0, 0], cursor: 'n-resize' }, { position: [1.0, 0.0], constraints: [1, 1, 0, 0], cursor: 'ne-resize' }, { position: [1.0, 0.5], constraints: [0, 1, 0, 0], cursor: 'e-resize' }, { position: [1.0, 1.0], constraints: [0, 1, 1, 0], cursor: 'se-resize' }, { position: [0.5, 1.0], constraints: [0, 0, 1, 0], cursor: 's-resize' }, { position: [0.0, 1.0], constraints: [0, 0, 1, 1], cursor: 'sw-resize' }, { position: [0.0, 0.5], constraints: [0, 0, 0, 1], cursor: 'w-resize' }];
+var CropprCore = function () {
+  function CropprCore(element, options) {
+    var _this = this;
+    var deferred = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+    classCallCheck(this, CropprCore);
+    if (options.preview) options.preview = this.getElement(options.preview);
+    this.options = CropprCore.parseOptions(options || {});
+    element = this.getElement(element);
+    if (!element.getAttribute('src')) {
+      throw 'Image src not provided.';
+    }
+    this._initialized = false;
+    this._restore = {
+      parent: element.parentNode,
+      element: element
+    };
+    if (this.options.preview) {
+      this._restore.preview = this.options.preview;
+      this._restore.parentPreview = this.options.preview.parentNode;
+    }
+    if (!deferred) {
+      if (element.width === 0 || element.height === 0) {
+        element.onload = function () {
+          _this.initialize(element);
+        };
+      } else {
+        this.initialize(element);
+      }
+    }
+  }
+  createClass(CropprCore, [{
+    key: 'initialize',
+    value: function initialize(element) {
+      var _this2 = this;
+      this.createDOM(element);
+      this.getSourceSize();
+      this.options.convertToPixels(this.imageEl, this.sourceSize);
+      this.attachHandlerEvents();
+      this.attachRegionEvents();
+      this.attachOverlayEvents();
+      this.initializeBox();
+      this.redraw();
+      this._initialized = true;
+      if (this.options.onInitialize !== null) {
+        this.options.onInitialize(this);
+      }
+      this.resizePreview();
+      this.cropperEl.onwheel = function (event) {
+        event.preventDefault();
+        var deltaY = event.deltaY;
+        var maxDelta = 0.05;
+        var coeff = deltaY > 0 ? 1 : -1;
+        deltaY = Math.abs(deltaY) / 100;
+        deltaY = deltaY > maxDelta ? maxDelta : deltaY;
+        deltaY = 1 + coeff * deltaY;
+        _this2.scaleBy(deltaY);
+      };
+      if (this.options.responsive) {
+        var onResize = void 0;
+        var resizeFunc = function resizeFunc() {
+          var newOptions = _this2.options;
+          var cropData = _this2.responsiveData;
+          var controlKeys = ["x", "y", "width", "height"];
+          for (var i = 0; i < controlKeys.length; i++) {
+            cropData[controlKeys[i]] *= 100;
+            cropData[controlKeys[i]] = cropData[controlKeys[i]] > 100 ? 100 : cropData[controlKeys[i]] < 0 ? 0 : cropData[controlKeys[i]];
+          }
+          newOptions.startPosition = [cropData.x, cropData.y, "%"];
+          newOptions.startSize = [cropData.width, cropData.height, "%"];
+          newOptions = CropprCore.parseOptions(newOptions);
+          newOptions.convertToPixels(_this2.imageEl, _this2.sourceSize);
+          _this2.initializeBox(newOptions);
+          _this2.redraw();
+        };
+        window.onresize = function () {
+          clearTimeout(onResize);
+          onResize = setTimeout(function () {
+            resizeFunc();
+          }, 100);
+        };
+      }
+    }
+  }, {
+    key: 'getElement',
+    value: function getElement(element, type) {
+      if (element) {
+        if (!element.nodeName) {
+          element = document.querySelector(element);
+          if (element == null) {
+            throw 'Unable to find element.';
+          }
+        }
+      }
+      return element;
+    }
+  }, {
+    key: 'createDOM',
+    value: function createDOM(targetEl) {
+      this.containerEl = document.createElement('div');
+      this.containerEl.className = 'croppr-container';
+      this.eventBus = this.containerEl;
+      enableTouch(this.containerEl);
+      this.cropperEl = document.createElement('div');
+      this.cropperEl.className = 'croppr';
+      this.imageEl = document.createElement('img');
+      this.imageEl.setAttribute('src', targetEl.getAttribute('src'));
+      this.imageEl.setAttribute('alt', targetEl.getAttribute('alt'));
+      this.imageEl.className = 'croppr-image';
+      this.imageClippedEl = this.imageEl.cloneNode();
+      this.imageClippedEl.className = 'croppr-imageClipped';
+      this.regionEl = document.createElement('div');
+      this.regionEl.className = 'croppr-region';
+      this.overlayEl = document.createElement('div');
+      this.overlayEl.className = 'croppr-overlay';
+      var handleContainerEl = document.createElement('div');
+      handleContainerEl.className = 'croppr-handleContainer';
+      this.handles = [];
+      for (var i = 0; i < HANDLES.length; i++) {
+        var handle = new Handle(HANDLES[i].position, HANDLES[i].constraints, HANDLES[i].cursor, this.eventBus);
+        this.handles.push(handle);
+        handleContainerEl.appendChild(handle.el);
+      }
+      this.cropperEl.appendChild(this.imageEl);
+      this.cropperEl.appendChild(this.imageClippedEl);
+      this.cropperEl.appendChild(this.regionEl);
+      this.cropperEl.appendChild(this.overlayEl);
+      this.cropperEl.appendChild(handleContainerEl);
+      this.containerEl.appendChild(this.cropperEl);
+      targetEl.parentElement.replaceChild(this.containerEl, targetEl);
+      this.setLivePreview();
+    }
+  }, {
+    key: 'setLivePreview',
+    value: function setLivePreview() {
+      if (this.options.preview) {
+        this.preview = {};
+        this.preview.parent = this.options.preview;
+        this.preview.parent.style.position = "relative";
+        var new_container = document.createElement("div");
+        this.preview.container = this.preview.parent.appendChild(new_container);
+        this.preview.container.style.overflow = "hidden";
+        this.preview.container.style.position = "absolute";
+        this.preview.container.style.top = "50%";
+        this.preview.container.style.left = "50%";
+        this.preview.container.style.transform = "translate(-50%, -50%)";
+      }
+    }
+  }, {
+    key: 'resizePreview',
+    value: function resizePreview() {
+      var cropData = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      if (cropData === null) cropData = this.getValue("ratio");
+      if (this.preview && cropData.width && cropData.height) {
+        var targetWidth = this.preview.parent.offsetWidth;
+        var targetHeight = this.preview.parent.offsetHeight;
+        var targetRatio = targetWidth / targetHeight;
+        var cropWidth = this.sourceSize.width * cropData.width;
+        var cropHeight = this.sourceSize.height * cropData.height;
+        var cropRatio = cropWidth / cropHeight;
+        var containerWidth = targetWidth;
+        var containerHeight = targetHeight;
+        if (targetRatio > cropRatio) {
+          containerWidth = containerHeight * cropRatio;
+        } else {
+          containerHeight = containerWidth / cropRatio;
+        }
+        this.preview.container.style.width = containerWidth + "px";
+        this.preview.container.style.height = containerHeight + "px";
+        var resizeWidth = this.sourceSize.width * containerWidth / cropWidth;
+        var resizeHeight = this.sourceSize.height * containerHeight / cropHeight;
+        var deltaX = -cropData.x * resizeWidth;
+        var deltaY = -cropData.y * resizeHeight;
+        this.preview.image.style.width = resizeWidth + "px";
+        this.preview.image.style.height = resizeHeight + "px";
+        this.preview.image.style.left = deltaX + "px";
+        this.preview.image.style.top = deltaY + "px";
+      }
+    }
+  }, {
+    key: 'strictlyConstrain',
+    value: function strictlyConstrain() {
+      var _this3 = this;
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var origins = void 0;
+      if (origin === null) {
+        origins = [[0, 0], [1, 1]];
+        origin = [.5, .5];
+      } else {
+        origins = [origin];
+      }
+      if (opts === null) opts = this.options;
+      var _imageEl$getBoundingC = this.imageEl.getBoundingClientRect(),
+          parentWidth = _imageEl$getBoundingC.width,
+          parentHeight = _imageEl$getBoundingC.height;
+      this.box.constrainToRatio(opts.aspectRatio, origin, "height", opts.maxAspectRatio);
+      this.box.constrainToSize(opts.maxSize.width, opts.maxSize.height, opts.minSize.width, opts.minSize.height, origin, opts.aspectRatio, opts.maxAspectRatio);
+      origins.map(function (newOrigin) {
+        _this3.box.constrainToBoundary(parentWidth, parentHeight, newOrigin);
+      });
+    }
+    /**
+     * Changes the image src.
+     * @param {String} src
+     */
+  }, {
+    key: 'setImage',
+    value: function setImage(src) {
+      var _this4 = this;
+      this.imageEl.onload = function () {
+        _this4.getSourceSize();
+        _this4.options.convertToPixels(_this4.imageEl, _this4.sourceSize);
+        _this4.initializeBox();
+        _this4.redraw();
+      };
+      this.imageEl.src = src;
+      this.imageClippedEl.src = src;
+      return this;
+    }
+  }, {
+    key: 'destroy',
+    value: function destroy() {
+      this._restore.parent.replaceChild(this._restore.element, this.containerEl);
+      if (this.options.preview) {
+        this.preview.image.parentNode.removeChild(this.preview.image);
+        this.preview.container.parentNode.removeChild(this.preview.container);
+      }
+    }
+    /**
+     * Create a new box region with a set of options.
+     * @param {Object} opts The options.
+     * @returns {Box}
+     */
+  }, {
+    key: 'initializeBox',
+    value: function initializeBox() {
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      if (opts === null) opts = this.options;
+      var boxWidth = opts.startSize.width;
+      var boxHeight = opts.startSize.height;
+      if (opts.minSize) {
+        if (boxWidth < opts.minSize.width) boxWidth = opts.minSize.width;else if (boxWidth < opts.maxSize.width) boxWidth = opts.maxSize.width;
+      }
+      if (opts.maxSize) {
+        if (boxHeight < opts.minSize.height) boxHeight = opts.minSize.height;else if (boxHeight < opts.maxSize.height) boxHeight = opts.maxSize.height;
+      }
+      var box = new Box(0, 0, boxWidth, boxHeight);
+      var x = 0;
+      var y = 0;
+      if (opts.startPosition === null) {
+        var _imageEl$getBoundingC2 = this.imageEl.getBoundingClientRect(),
+            parentWidth = _imageEl$getBoundingC2.width,
+            parentHeight = _imageEl$getBoundingC2.height;
+        x = parentWidth / 2 - boxWidth / 2;
+        y = parentHeight / 2 - boxHeight / 2;
+      } else {
+        x = opts.startPosition.x;
+        y = opts.startPosition.y;
+      }
+      box.move(x, y);
+      if (this.preview) {
+        if (this.preview.image) {
+          this.preview.image.parentNode.removeChild(this.preview.image);
+          this.preview.image = null;
+        }
+        var new_img = document.createElement("img");
+        new_img.src = this.imageEl.src;
+        this.preview.image = this.preview.container.appendChild(new_img);
+        this.preview.image.style.position = "relative";
+      }
+      this.box = box;
+      this.strictlyConstrain(opts);
+      return box;
+    }
+  }, {
+    key: 'getSourceSize',
+    value: function getSourceSize() {
+      this.sourceSize = {};
+      this.sourceSize.width = this.imageEl.naturalWidth;
+      this.sourceSize.height = this.imageEl.naturalHeight;
+      return this.sourceSize;
+    }
+  }, {
+    key: 'convertRealDataToPixel',
+    value: function convertRealDataToPixel(data) {
+      var _imageEl$getBoundingC3 = this.imageEl.getBoundingClientRect(),
+          width = _imageEl$getBoundingC3.width,
+          height = _imageEl$getBoundingC3.height;
+      var factorX = this.sourceSize.width / width;
+      var factorY = this.sourceSize.height / height;
+      if (data.width) {
+        data.width /= factorX;
+      }
+      if (data.x) {
+        data.x /= factorX;
+      }
+      if (data.height) {
+        data.height /= factorY;
+      }
+      if (data.y) {
+        data.y /= factorY;
+      }
+      return data;
+    }
+  }, {
+    key: 'redraw',
+    value: function redraw() {
+      var _this5 = this;
+      this.resizePreview();
+      var width = Math.round(this.box.width()),
+          height = Math.round(this.box.height()),
+          x1 = Math.round(this.box.x1),
+          y1 = Math.round(this.box.y1),
+          x2 = Math.round(this.box.x2),
+          y2 = Math.round(this.box.y2);
+      window.requestAnimationFrame(function () {
+        _this5.regionEl.style.transform = 'translate(' + x1 + 'px, ' + y1 + 'px)';
+        _this5.regionEl.style.width = width + 'px';
+        _this5.regionEl.style.height = height + 'px';
+        _this5.imageClippedEl.style.clip = 'rect(' + y1 + 'px, ' + x2 + 'px, ' + y2 + 'px, ' + x1 + 'px)';
+        var center = _this5.box.getAbsolutePoint([.5, .5]);
+        var _imageEl$getBoundingC4 = _this5.imageEl.getBoundingClientRect(),
+            parentWidth = _imageEl$getBoundingC4.width,
+            parentHeight = _imageEl$getBoundingC4.height;
+        var xSign = center[0] - parentWidth / 2 >> 31;
+        var ySign = center[1] - parentHeight / 2 >> 31;
+        var quadrant = (xSign ^ ySign) + ySign + ySign + 4;
+        var foregroundHandleIndex = -2 * quadrant + 8;
+        for (var i = 0; i < _this5.handles.length; i++) {
+          var handle = _this5.handles[i];
+          var handleWidth = handle.el.offsetWidth;
+          var handleHeight = handle.el.offsetHeight;
+          var left = x1 + width * handle.position[0] - handleWidth / 2;
+          var top = y1 + height * handle.position[1] - handleHeight / 2;
+          handle.el.style.transform = 'translate(' + Math.round(left) + 'px, ' + Math.round(top) + 'px)';
+          handle.el.style.zIndex = foregroundHandleIndex == i ? 5 : 4;
+        }
+      });
+    }
+  }, {
+    key: 'attachHandlerEvents',
+    value: function attachHandlerEvents() {
+      var eventBus = this.eventBus;
+      eventBus.addEventListener('handlestart', this.onHandleMoveStart.bind(this));
+      eventBus.addEventListener('handlemove', this.onHandleMoveMoving.bind(this));
+      eventBus.addEventListener('handleend', this.onHandleMoveEnd.bind(this));
+    }
+  }, {
+    key: 'attachRegionEvents',
+    value: function attachRegionEvents() {
+      var eventBus = this.eventBus;
+      var self = this;
+      this.regionEl.addEventListener('mousedown', onMouseDown);
+      eventBus.addEventListener('regionstart', this.onRegionMoveStart.bind(this));
+      eventBus.addEventListener('regionmove', this.onRegionMoveMoving.bind(this));
+      eventBus.addEventListener('regionend', this.onRegionMoveEnd.bind(this));
+      function onMouseDown(e) {
+        e.stopPropagation();
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('mousemove', onMouseMove);
+        eventBus.dispatchEvent(new CustomEvent('regionstart', {
+          detail: { mouseX: e.clientX, mouseY: e.clientY }
+        }));
+      }
+      function onMouseMove(e) {
+        e.stopPropagation();
+        eventBus.dispatchEvent(new CustomEvent('regionmove', {
+          detail: { mouseX: e.clientX, mouseY: e.clientY }
+        }));
+      }
+      function onMouseUp(e) {
+        e.stopPropagation();
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('mousemove', onMouseMove);
+        eventBus.dispatchEvent(new CustomEvent('regionend', {
+          detail: { mouseX: e.clientX, mouseY: e.clientY }
+        }));
+      }
+    }
+  }, {
+    key: 'attachOverlayEvents',
+    value: function attachOverlayEvents() {
+      var SOUTHEAST_HANDLE_IDX = 4;
+      var self = this;
+      var tmpBox = null;
+      this.overlayEl.addEventListener('mousedown', onMouseDown);
+      function onMouseDown(e) {
+        e.stopPropagation();
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('mousemove', onMouseMove);
+        var container = self.cropperEl.getBoundingClientRect();
+        var mouseX = e.clientX - container.left;
+        var mouseY = e.clientY - container.top;
+        tmpBox = self.box;
+        self.box = new Box(mouseX, mouseY, mouseX + 1, mouseY + 1);
+        self.eventBus.dispatchEvent(new CustomEvent('handlestart', {
+          detail: { handle: self.handles[SOUTHEAST_HANDLE_IDX] }
+        }));
+      }
+      function onMouseMove(e) {
+        e.stopPropagation();
+        self.eventBus.dispatchEvent(new CustomEvent('handlemove', {
+          detail: { mouseX: e.clientX, mouseY: e.clientY }
+        }));
+      }
+      function onMouseUp(e) {
+        e.stopPropagation();
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('mousemove', onMouseMove);
+        if (self.box.width() === 1 && self.box.height() === 1) {
+          self.box = tmpBox;
+          return;
+        }
+        self.eventBus.dispatchEvent(new CustomEvent('handleend', {
+          detail: { mouseX: e.clientX, mouseY: e.clientY }
+        }));
+      }
+    }
+  }, {
+    key: 'onHandleMoveStart',
+    value: function onHandleMoveStart(e) {
+      var handle = e.detail.handle;
+      var originPoint = [1 - handle.position[0], 1 - handle.position[1]];
+      var _box$getAbsolutePoint = this.box.getAbsolutePoint(originPoint),
+          _box$getAbsolutePoint2 = slicedToArray(_box$getAbsolutePoint, 2),
+          originX = _box$getAbsolutePoint2[0],
+          originY = _box$getAbsolutePoint2[1];
+      this.activeHandle = { handle: handle, originPoint: originPoint, originX: originX, originY: originY
+      };if (this.options.onCropStart !== null) {
+        this.options.onCropStart(this.getValue());
+      }
+    }
+  }, {
+    key: 'onHandleMoveMoving',
+    value: function onHandleMoveMoving(e) {
+      var _e$detail = e.detail,
+          mouseX = _e$detail.mouseX,
+          mouseY = _e$detail.mouseY;
+      var container = this.cropperEl.getBoundingClientRect();
+      mouseX = mouseX - container.left;
+      mouseY = mouseY - container.top;
+      if (mouseX < 0) {
+        mouseX = 0;
+      } else if (mouseX > container.width) {
+        mouseX = container.width;
+      }
+      if (mouseY < 0) {
+        mouseY = 0;
+      } else if (mouseY > container.height) {
+        mouseY = container.height;
+      }
+      var origin = this.activeHandle.originPoint.slice();
+      var originX = this.activeHandle.originX;
+      var originY = this.activeHandle.originY;
+      var handle = this.activeHandle.handle;
+      var TOP_MOVABLE = handle.constraints[0] === 1;
+      var RIGHT_MOVABLE = handle.constraints[1] === 1;
+      var BOTTOM_MOVABLE = handle.constraints[2] === 1;
+      var LEFT_MOVABLE = handle.constraints[3] === 1;
+      var MULTI_AXIS = (LEFT_MOVABLE || RIGHT_MOVABLE) && (TOP_MOVABLE || BOTTOM_MOVABLE);
+      var x1 = LEFT_MOVABLE || RIGHT_MOVABLE ? originX : this.box.x1;
+      var x2 = LEFT_MOVABLE || RIGHT_MOVABLE ? originX : this.box.x2;
+      var y1 = TOP_MOVABLE || BOTTOM_MOVABLE ? originY : this.box.y1;
+      var y2 = TOP_MOVABLE || BOTTOM_MOVABLE ? originY : this.box.y2;
+      x1 = LEFT_MOVABLE ? mouseX : x1;
+      x2 = RIGHT_MOVABLE ? mouseX : x2;
+      y1 = TOP_MOVABLE ? mouseY : y1;
+      y2 = BOTTOM_MOVABLE ? mouseY : y2;
+      var isFlippedX = false,
+          isFlippedY = false;
+      if (LEFT_MOVABLE || RIGHT_MOVABLE) {
+        isFlippedX = LEFT_MOVABLE ? mouseX > originX : mouseX < originX;
+      }
+      if (TOP_MOVABLE || BOTTOM_MOVABLE) {
+        isFlippedY = TOP_MOVABLE ? mouseY > originY : mouseY < originY;
+      }
+      if (isFlippedX) {
+        var tmp = x1;x1 = x2;x2 = tmp;
+        origin[0] = 1 - origin[0];
+      }
+      if (isFlippedY) {
+        var _tmp = y1;y1 = y2;y2 = _tmp;
+        origin[1] = 1 - origin[1];
+      }
+      var box = new Box(x1, y1, x2, y2);
+      if (this.options.aspectRatio) {
+        var ratio = this.options.aspectRatio;
+        var isVerticalMovement = false;
+        if (MULTI_AXIS) {
+          isVerticalMovement = mouseY > box.y1 + ratio * box.width() || mouseY < box.y2 - ratio * box.width();
+        } else if (TOP_MOVABLE || BOTTOM_MOVABLE) {
+          isVerticalMovement = true;
+        }
+        var ratioMode = isVerticalMovement ? 'width' : 'height';
+        box.constrainToRatio(ratio, origin, ratioMode, this.options.maxAspectRatio);
+      }
+      box.constrainToSize(this.options.maxSize.width, this.options.maxSize.height, this.options.minSize.width, this.options.minSize.height, origin, this.options.aspectRatio, this.options.maxAspectRatio);
+      var _imageEl$getBoundingC5 = this.imageEl.getBoundingClientRect(),
+          parentWidth = _imageEl$getBoundingC5.width,
+          parentHeight = _imageEl$getBoundingC5.height;
+      var boundaryOrigins = [origin];
+      if (this.options.maxAspectRatio) boundaryOrigins = [[0, 0], [1, 1]];
+      boundaryOrigins.map(function (boundaryOrigin) {
+        box.constrainToBoundary(parentWidth, parentHeight, boundaryOrigin);
+      });
+      this.box = box;
+      this.redraw();
+      if (this.options.onCropMove !== null) {
+        this.options.onCropMove(this.getValue());
+      }
+    }
+  }, {
+    key: 'onHandleMoveEnd',
+    value: function onHandleMoveEnd(e) {
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
+    }
+  }, {
+    key: 'onRegionMoveStart',
+    value: function onRegionMoveStart(e) {
+      var _e$detail2 = e.detail,
+          mouseX = _e$detail2.mouseX,
+          mouseY = _e$detail2.mouseY;
+      var container = this.cropperEl.getBoundingClientRect();
+      mouseX = mouseX - container.left;
+      mouseY = mouseY - container.top;
+      this.currentMove = {
+        offsetX: mouseX - this.box.x1,
+        offsetY: mouseY - this.box.y1
+      };if (this.options.onCropStart !== null) {
+        this.options.onCropStart(this.getValue());
+      }
+    }
+  }, {
+    key: 'onRegionMoveMoving',
+    value: function onRegionMoveMoving(e) {
+      var _e$detail3 = e.detail,
+          mouseX = _e$detail3.mouseX,
+          mouseY = _e$detail3.mouseY;
+      var _currentMove = this.currentMove,
+          offsetX = _currentMove.offsetX,
+          offsetY = _currentMove.offsetY;
+      var container = this.cropperEl.getBoundingClientRect();
+      mouseX = mouseX - container.left;
+      mouseY = mouseY - container.top;
+      this.box.move(mouseX - offsetX, mouseY - offsetY);
+      if (this.box.x1 < 0) {
+        this.box.move(0, null);
+      }
+      if (this.box.x2 > container.width) {
+        this.box.move(container.width - this.box.width(), null);
+      }
+      if (this.box.y1 < 0) {
+        this.box.move(null, 0);
+      }
+      if (this.box.y2 > container.height) {
+        this.box.move(null, container.height - this.box.height());
+      }
+      this.redraw();
+      if (this.options.onCropMove !== null) {
+        this.options.onCropMove(this.getValue());
+      }
+    }
+  }, {
+    key: 'onRegionMoveEnd',
+    value: function onRegionMoveEnd(e) {
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
+    }
+  }, {
+    key: 'getValue',
+    value: function getValue() {
+      var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      if (mode === null) {
+        mode = this.options.returnMode;
+      }
+      var cropData = {};
+      if (mode == 'real') {
+        cropData = this.getValueAsRealData();
+      } else if (mode == 'ratio') {
+        cropData = this.getValueAsRatio();
+      } else if (mode == 'raw') {
+        cropData = {
+          x: Math.round(this.box.x1),
+          y: Math.round(this.box.y1),
+          width: Math.round(this.box.width()),
+          height: Math.round(this.box.height())
+        };
+      }
+      if (this.options.responsive) {
+        if (mode == "ratio") this.responsiveData = cropData;else this.responsiveData = this.getValueAsRatio();
+      }
+      return cropData;
+    }
+  }, {
+    key: 'getValueAsRealData',
+    value: function getValueAsRealData() {
+      var actualWidth = this.imageEl.naturalWidth;
+      var actualHeight = this.imageEl.naturalHeight;
+      var _imageEl$getBoundingC6 = this.imageEl.getBoundingClientRect(),
+          elementWidth = _imageEl$getBoundingC6.width,
+          elementHeight = _imageEl$getBoundingC6.height;
+      var factorX = actualWidth / elementWidth;
+      var factorY = actualHeight / elementHeight;
+      return {
+        x: Math.round(this.box.x1 * factorX),
+        y: Math.round(this.box.y1 * factorY),
+        width: Math.round(this.box.width() * factorX),
+        height: Math.round(this.box.height() * factorY)
+      };
+    }
+  }, {
+    key: 'getValueAsRatio',
+    value: function getValueAsRatio() {
+      var _imageEl$getBoundingC7 = this.imageEl.getBoundingClientRect(),
+          elementWidth = _imageEl$getBoundingC7.width,
+          elementHeight = _imageEl$getBoundingC7.height;
+      return {
+        x: this.box.x1 / elementWidth,
+        y: this.box.y1 / elementHeight,
+        width: this.box.width() / elementWidth,
+        height: this.box.height() / elementHeight
+      };
+    }
+  }], [{
+    key: 'parseOptions',
+    value: function parseOptions(opts) {
+      var defaults$$1 = {
+        aspectRatio: null,
+        maxAspectRatio: null,
+        maxSize: { width: null, height: null, unit: 'px', real: false },
+        minSize: { width: null, height: null, unit: 'px', real: false },
+        startSize: { width: 100, height: 100, unit: '%', real: false },
+        startPosition: null,
+        returnMode: 'real',
+        onInitialize: null,
+        onCropStart: null,
+        onCropMove: null,
+        onCropEnd: null,
+        preview: null,
+        responsive: true
+      };var preview = null;
+      if (opts.preview !== null) preview = opts.preview;
+      var responsive = null;
+      if (opts.responsive !== null) responsive = opts.responsive;
+      var aspectRatio = null;
+      var maxAspectRatio = null;
+      var ratioKeys = ["aspectRatio", "maxAspectRatio"];
+      for (var i = 0; i < ratioKeys.length; i++) {
+        if (opts[ratioKeys[i]] !== undefined) {
+          if (typeof opts[ratioKeys[i]] === 'number') {
+            var ratio = opts[ratioKeys[i]];
+            if (ratioKeys[i] === "aspectRatio") aspectRatio = ratio;else maxAspectRatio = ratio;
+          } else if (opts[ratioKeys[i]] instanceof Array) {
+            var _ratio = opts[ratioKeys[i]][1] / opts[ratioKeys[i]][0];
+            if (ratioKeys[i] === "aspectRatio") aspectRatio = _ratio;else maxAspectRatio = _ratio;
+          }
+        }
+      }
+      var maxSize = null;
+      if (opts.maxSize !== undefined && opts.maxSize !== null) {
+        maxSize = {
+          width: opts.maxSize[0] || null,
+          height: opts.maxSize[1] || null,
+          unit: opts.maxSize[2] || 'px',
+          real: opts.minSize[3] || false
+        };
+      }
+      var minSize = null;
+      if (opts.minSize !== undefined && opts.minSize !== null) {
+        minSize = {
+          width: opts.minSize[0] || null,
+          height: opts.minSize[1] || null,
+          unit: opts.minSize[2] || 'px',
+          real: opts.minSize[3] || false
+        };
+      }
+      var startSize = null;
+      if (opts.startSize !== undefined && opts.startSize !== null) {
+        startSize = {
+          width: opts.startSize[0] || null,
+          height: opts.startSize[1] || null,
+          unit: opts.startSize[2] || '%',
+          real: opts.startSize[3] || false
+        };
+      }
+      var startPosition = null;
+      if (opts.startPosition !== undefined && opts.startPosition !== null) {
+        startPosition = {
+          x: opts.startPosition[0] || null,
+          y: opts.startPosition[1] || null,
+          unit: opts.startPosition[2] || '%',
+          real: opts.startPosition[3] || false
+        };
+      }
+      var onInitialize = null;
+      if (typeof opts.onInitialize === 'function') {
+        onInitialize = opts.onInitialize;
+      }
+      var onCropStart = null;
+      if (typeof opts.onCropStart === 'function') {
+        onCropStart = opts.onCropStart;
+      }
+      var onCropEnd = null;
+      if (typeof opts.onCropEnd === 'function') {
+        onCropEnd = opts.onCropEnd;
+      }
+      var onCropMove = null;
+      if (typeof opts.onUpdate === 'function') {
+        console.warn('Croppr.js: `onUpdate` is deprecated and will be removed in the next major release. Please use `onCropMove` or `onCropEnd` instead.');
+        onCropMove = opts.onUpdate;
+      }
+      if (typeof opts.onCropMove === 'function') {
+        onCropMove = opts.onCropMove;
+      }
+      var returnMode = null;
+      if (opts.returnMode !== undefined) {
+        var s = opts.returnMode.toLowerCase();
+        if (['real', 'ratio', 'raw'].indexOf(s) === -1) {
+          throw "Invalid return mode.";
+        }
+        returnMode = s;
+      }
+      var convertToPixels = function convertToPixels(imageEl) {
+        var sourceSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var _imageEl$getBoundingC8 = imageEl.getBoundingClientRect(),
+            width = _imageEl$getBoundingC8.width,
+            height = _imageEl$getBoundingC8.height;
+        var sizeKeys = ['maxSize', 'minSize', 'startSize', 'startPosition'];
+        for (var _i = 0; _i < sizeKeys.length; _i++) {
+          var key = sizeKeys[_i];
+          if (this[key] !== null) {
+            if (this[key].unit == '%') {
+              this[key] = convertPercentToPixel(width, height, this[key]);
+            } else if (this[key].real === true && sourceSize) {
+              this[key] = convertRealDataToPixel(width, height, sourceSize.width, sourceSize.height, this[key]);
+            }
+            delete this[key].unit;
+          }
+        }
+        if (this.minSize) {
+          if (this.minSize.width > width) this.minSize.width = width;
+          if (this.minSize.height > height) this.minSize.height = height;
+        }
+        if (this.startSize && this.startPosition) {
+          var xEnd = this.startPosition.x + this.startSize.width;
+          if (xEnd > width) this.startPosition.x -= xEnd - width;
+          var yEnd = this.startPosition.y + this.startSize.height;
+          if (yEnd > height) this.startPosition.y -= yEnd - height;
+        }
+      };
+      var convertPercentToPixel = function convertPercentToPixel(width, height, data) {
+        if (data.width) {
+          data.width = data.width / 100 * width;
+        } else if (data.x) {
+          data.x = data.x / 100 * width;
+        }
+        if (data.height) {
+          data.height = data.height / 100 * height;
+        } else if (data.y) {
+          data.y = data.y / 100 * height;
+        }
+        return data;
+      };
+      var convertRealDataToPixel = function convertRealDataToPixel(width, height, sourceWidth, sourceHeight, data) {
+        var factorX = sourceWidth / width;
+        var factorY = sourceHeight / height;
+        if (data.width) {
+          data.width /= factorX;
+        } else if (data.x) {
+          data.x /= factorX;
+        }
+        if (data.height) {
+          data.height /= factorY;
+        } else if (data.y) {
+          data.y /= factorY;
+        }
+        return data;
+      };
+      var defaultValue = function defaultValue(v, d) {
+        return v !== null ? v : d;
+      };
+      return {
+        aspectRatio: defaultValue(aspectRatio, defaults$$1.aspectRatio),
+        maxAspectRatio: defaultValue(maxAspectRatio, defaults$$1.maxAspectRatio),
+        maxSize: defaultValue(maxSize, defaults$$1.maxSize),
+        minSize: defaultValue(minSize, defaults$$1.minSize),
+        startSize: defaultValue(startSize, defaults$$1.startSize),
+        startPosition: defaultValue(startPosition, defaults$$1.startPosition),
+        returnMode: defaultValue(returnMode, defaults$$1.returnMode),
+        onInitialize: defaultValue(onInitialize, defaults$$1.onInitialize),
+        onCropStart: defaultValue(onCropStart, defaults$$1.onCropStart),
+        onCropMove: defaultValue(onCropMove, defaults$$1.onCropMove),
+        onCropEnd: defaultValue(onCropEnd, defaults$$1.onCropEnd),
+        preview: defaultValue(preview, defaults$$1.preview),
+        responsive: defaultValue(responsive, defaults$$1.responsive),
+        convertToPixels: convertToPixels
+      };
+    }
+  }]);
+  return CropprCore;
+}();
+
+var Croppr$1 = function (_CropprCore) {
+  inherits(Croppr, _CropprCore);
+  /**
+   * @constructor
+   * Calls the CropprCore's constructor.
+   */
+  function Croppr(element, options) {
+    var _deferred = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+    classCallCheck(this, Croppr);
+    return possibleConstructorReturn(this, (Croppr.__proto__ || Object.getPrototypeOf(Croppr)).call(this, element, options, _deferred));
+  }
+  /**
+   * Gets the value of the crop region.
+   * @param {String} [mode] Which mode of calculation to use: 'real', 'ratio' or
+   *      'raw'.
+   */
+  createClass(Croppr, [{
+    key: 'getValue',
+    value: function getValue(mode) {
+      return get(Croppr.prototype.__proto__ || Object.getPrototypeOf(Croppr.prototype), 'getValue', this).call(this, mode);
+    }
+    /**
+     * Changes the image src.
+     * @param {String} src
+     */
+  }, {
+    key: 'setImage',
+    value: function setImage(src) {
+      return get(Croppr.prototype.__proto__ || Object.getPrototypeOf(Croppr.prototype), 'setImage', this).call(this, src);
+    }
+  }, {
+    key: 'destroy',
+    value: function destroy() {
+      return get(Croppr.prototype.__proto__ || Object.getPrototypeOf(Croppr.prototype), 'destroy', this).call(this);
+    }
+    /**
+     * Moves the crop region to a specified coordinate.
+     * @param {Number} x
+     * @param {Number} y
+     */
+  }, {
+    key: 'moveTo',
+    value: function moveTo(x, y) {
+      var constrain = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      this.box.move(x, y);
+      if (constrain === true) this.strictlyConstrain();
+      this.redraw();
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
+      return this;
+    }
+    /**
+     * Resizes the crop region to a specified width and height.
+     * @param {Number} width
+     * @param {Number} height
+     * @param {Array} origin The origin point to resize from.
+     *      Defaults to [0.5, 0.5] (center).
+     */
+  }, {
+    key: 'resizeTo',
+    value: function resizeTo(width, height) {
+      var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var constrain = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+      if (origin === null) origin = [.5, .5];else constrain = false;
+      this.box.resize(width, height, origin);
+      if (constrain === true) this.strictlyConstrain();
+      this.redraw();
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
+      return this;
+    }
+    /**
+     * Scale the crop region by a factor.
+     * @param {Number} factor
+     * @param {Array} origin The origin point to resize from.
+     *      Defaults to [0.5, 0.5] (center).
+     */
+  }, {
+    key: 'scaleBy',
+    value: function scaleBy(factor) {
+      var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var constrain = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      if (origin === null) origin = [.5, .5];else constrain = false;
+      this.box.scale(factor, origin);
+      if (constrain === true) this.strictlyConstrain();
+      this.redraw();
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
+      return this;
+    }
+  }, {
+    key: 'reset',
+    value: function reset() {
+      this.box = this.initializeBox(this.options);
+      this.redraw();
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
+      return this;
+    }
+  }]);
+  return Croppr;
+}(CropprCore);
+
+return Croppr$1;
+
+})));
