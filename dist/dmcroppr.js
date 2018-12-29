@@ -1,17 +1,21 @@
 /**
- * Croppr.js
- * https://github.com/jamesssooi/Croppr.js
- * 
+ * Fork from Croppr.js : https://github.com/jamesssooi/Croppr.js
+ * Original author : James Ooi. 
+ *
  * A JavaScript image cropper that's lightweight, awesome, and has
  * zero dependencies.
  * 
- * (C) 2017 James Ooi. Released under the MIT License.
+ * DmCroppr.js : https://github.com/devdanim/DmCroppr.js
+ * Fork author : Adrien du Repaire
+ *
+ * Released under the MIT License.
+ *
  */
 
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
-	(global.Croppr = factory());
+	(global.DmCroppr = factory());
 }(this, (function () { 'use strict';
 
 (function () {
@@ -629,30 +633,28 @@ var CropprCore = function () {
         _this2.scaleBy(deltaY);
       };
       if (this.options.responsive) {
-        (function () {
-          var onResize = void 0;
-          var resizeFunc = function resizeFunc() {
-            var newOptions = _this2.options;
-            var cropData = _this2.responsiveData;
-            var controlKeys = ["x", "y", "width", "height"];
-            for (var i = 0; i < controlKeys.length; i++) {
-              cropData[controlKeys[i]] *= 100;
-              cropData[controlKeys[i]] = cropData[controlKeys[i]] > 100 ? 100 : cropData[controlKeys[i]] < 0 ? 0 : cropData[controlKeys[i]];
-            }
-            newOptions.startPosition = [cropData.x, cropData.y, "%"];
-            newOptions.startSize = [cropData.width, cropData.height, "%"];
-            newOptions = CropprCore.parseOptions(newOptions);
-            newOptions.convertToPixels(_this2.imageEl, _this2.sourceSize);
-            _this2.initializeBox(newOptions);
-            _this2.redraw();
-          };
-          window.onresize = function () {
-            clearTimeout(onResize);
-            onResize = setTimeout(function () {
-              resizeFunc();
-            }, 100);
-          };
-        })();
+        var onResize = void 0;
+        var resizeFunc = function resizeFunc() {
+          var newOptions = _this2.options;
+          var cropData = _this2.responsiveData;
+          var controlKeys = ["x", "y", "width", "height"];
+          for (var i = 0; i < controlKeys.length; i++) {
+            cropData[controlKeys[i]] *= 100;
+            cropData[controlKeys[i]] = cropData[controlKeys[i]] > 100 ? 100 : cropData[controlKeys[i]] < 0 ? 0 : cropData[controlKeys[i]];
+          }
+          newOptions.startPosition = [cropData.x, cropData.y, "%"];
+          newOptions.startSize = [cropData.width, cropData.height, "%"];
+          newOptions = CropprCore.parseOptions(newOptions);
+          newOptions.convertToPixels(_this2.imageEl, _this2.sourceSize);
+          _this2.initializeBox(newOptions);
+          _this2.redraw();
+        };
+        window.onresize = function () {
+          clearTimeout(onResize);
+          onResize = setTimeout(function () {
+            resizeFunc();
+          }, 100);
+        };
       }
     }
   }, {
@@ -1000,8 +1002,8 @@ var CropprCore = function () {
           _box$getAbsolutePoint2 = slicedToArray(_box$getAbsolutePoint, 2),
           originX = _box$getAbsolutePoint2[0],
           originY = _box$getAbsolutePoint2[1];
-      this.activeHandle = { handle: handle, originPoint: originPoint, originX: originX, originY: originY };
-      if (this.options.onCropStart !== null) {
+      this.activeHandle = { handle: handle, originPoint: originPoint, originX: originX, originY: originY
+      };if (this.options.onCropStart !== null) {
         this.options.onCropStart(this.getValue());
       }
     }
@@ -1103,8 +1105,7 @@ var CropprCore = function () {
       this.currentMove = {
         offsetX: mouseX - this.box.x1,
         offsetY: mouseY - this.box.y1
-      };
-      if (this.options.onCropStart !== null) {
+      };if (this.options.onCropStart !== null) {
         this.options.onCropStart(this.getValue());
       }
     }
@@ -1217,8 +1218,7 @@ var CropprCore = function () {
         onCropEnd: null,
         preview: null,
         responsive: true
-      };
-      var preview = null;
+      };var preview = null;
       if (opts.preview !== null) preview = opts.preview;
       var responsive = null;
       if (opts.responsive !== null) responsive = opts.responsive;

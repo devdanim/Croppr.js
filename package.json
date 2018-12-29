@@ -1,26 +1,24 @@
 {
-  "name": "croppr",
-  "version": "2.3.1",
-  "description": "A vanilla JavaScript image cropper that's lightweight, awesome, and has absolutely zero dependencies.",
-  "main": "dist/croppr.js",
-  "typings": "./index.d.ts",
+  "name": "dmcroppr",
+  "version": "2.3.2",
+  "description": "A fork of original Croppr.js, a vanilla JavaScript image cropper, with advanced options.",
+  "main": "dist/dmcroppr.js",
   "scripts": {
-    "test": "mocha",
-    "build": "rollup --config rollup.config.dev.js & cp src/css/croppr.css dist/croppr.css",
+    "build": "rollup --config rollup.config.dev.js & cp src/css/croppr.css dist/dmcroppr.css",
     "watch": "onchange \"src/**/*.*\" -v -- npm run build",
-    "production": "npm run build & rollup --config rollup.config.prod.js & cleancss src/css/croppr.css -o dist/croppr.min.css",
+    "production": "npm run build & rollup --config rollup.config.prod.js & cleancss src/css/croppr.css -o dist/dmcroppr.min.css",
     "dist": "npm run build && npm run production"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jamesssooi/Croppr.js.git"
+    "url": "git+https://github.com/devdanim/DmCroppr.js"
   },
-  "author": "James Ooi",
+  "author": "Adrien du Repaire",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jamesssooi/Croppr.js/issues"
+    "url": "https://github.com/devdanim/DmCroppr.js/issues"
   },
-  "homepage": "https://github.com/jamesssooi/Croppr.js#readme",
+  "homepage": "https://github.com/devdanim/DmCroppr.js#readme",
   "keywords": [
     "image",
     "cropper",
@@ -55,8 +53,5 @@
     "presets": [
       "es2015-rollup"
     ]
-  },
-  "dependencies": {
-    "smartcrop": "^2.0.3"
   }
 }

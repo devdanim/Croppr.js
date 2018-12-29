@@ -1,4 +1,4 @@
-![Croppr.js](https://raw.githubusercontent.com/jamesssooi/Croppr.js/master/assets/logo.png)
+![Croppr.js](https://raw.githubusercontent.com/devdanim/DmCroppr.js/master/assets/logo.png)
 
 ### Fork from Cropper.js, a vanilla JavaScript image cropper that's lightweight, awesome, and has absolutely zero dependencies.
 
@@ -28,25 +28,17 @@ npm install dmcroppr -—save
 ```
 
 ```javascript
-// CommonJS
-var Croppr = require('croppr');
-
 // ES6 import
 import Croppr from 'dmcroppr';
 ```
 _Note: Don't forget to bundle or include croppr.css!_
 
-**Via Bower:**
-```bash
-bower install croppr
-```
-Then include via script tag below.
 
 **Via script tag:**
 
 ```html
-<link href="path/to/croppr.css" rel="stylesheet"/>
-<script src="path/to/croppr.js"></script>
+<link href="path/to/dmcroppr.css" rel="stylesheet"/>
+<script src="path/to/dmcroppr.js"></script>
 ```
 
 
@@ -88,16 +80,23 @@ Constrain the crop region to an aspect ratio.
 * Example: `aspectRatio: 1` (Square)
 
 
+#### **maxAspectRatio**
+
+If maxAspectRatio and aspectRatio aren't null, the crop region is constrained between these two aspect ratios.
+
+* Type: `Number`
+* Default: `null`
+* Example: `aspectRatio: 1` (Square)
+
+
 
 #### **maxSize**
 
 Constrain the crop region to a maximum size.
 
-* Type: `[width, height, unit?]`
+* Type: `[width, height, unit?, real?]`
 * Default: `null`
-* Example: `maxSize: [50, 50, '%']` (A maximum size of 50% of the image size)
-
-_Note: `unit` accepts a value of **'px'** or **'%'**. Defaults to **'px'**._
+* Example: `maxSize: [50, 50, '%', false]` (A maximum size of 50% of the image size)
 
 
 
@@ -105,24 +104,32 @@ _Note: `unit` accepts a value of **'px'** or **'%'**. Defaults to **'px'**._
 
 Constrain the crop region to a minimum size.
 
-- Type: `[width, height, unit?]`
+- Type: `[width, height, unit?, real?]`
 - Default: `null`
-- Example: `minSize: [20, 20, 'px']` (A minimum width and height of 20px)
-
-_Note: `unit` accepts a value of **'px'** or **'%'**. Defaults to **'px'**._
-
+- Example: `minSize: [20, 20, 'px', true]` (A minimum width and height of 20px, relative to source image size)
 
 
 #### **startSize**
 
 The starting size of the crop region when it is initialized.
 
-- Type: `[width, height, unit?]`
-- Default: `[100, 100, '%']` (A starting crop region as large as possible)
+- Type: `[width, height, unit?, real?]`
+- Default: `[100, 100, '%', false]` (A starting crop region as large as possible)
 - Example: `startSize: [50, 50]` (A starting crop region of 50% of the image size)
 
-_Note: `unit` accepts a value of **'px'** or **'%'**. Defaults to **'%'**._
 
+#### **startPosition**
+
+The starting position of the crop region when it is initialized.
+
+- Type: `[width, height, unit?, real?]`
+- Default: `null` (Crop region is centered)
+- Example: `startSize: [250, 100, "px", true]` (A starting crop region positioned at 250 px from left, and 100 px from top, relative to source image size)
+
+
+_Note: `unit` accepts a value of **'px'** or **'%'**. Defaults to **'px'**._
+
+_Note: If `real` is true and `unit` is **'px'**, size is based on source image. If `real` is false, size is based on croppr container. Defaults to **false**._
 
 
 #### **onCropStart**
@@ -190,6 +197,15 @@ Define how the crop region should be calculated.
   * `raw` returns the crop region values as is based on the size of the Croppr element.
 
 
+#### **preview**
+
+Define the container for live preview.
+
+* Type: `String` or `Element`
+* Default: `null`
+* Possible values: If container ID is "preview", value can be `"#preview"` or an `Element` object as `document.getElementById("preview")`
+
+s
 
 ## Methods
 
@@ -231,7 +247,5 @@ Resets the crop region to its original position and size. Returns the Croppr ins
 
 - - -
 
-[![Build Status](https://travis-ci.org/jamesssooi/Croppr.js.svg?branch=master)](https://travis-ci.org/jamesssooi/Croppr.js)
-
-Copyright © 2018 James Ooi.
+Thanks to original author James Ooi.
 Released under the MIT License.

@@ -1,14 +1,14 @@
-/// @ts-check
-/// <reference path="../index.d.ts"/>
-
 /**
- * Croppr.js
- * https://github.com/jamesssooi/Croppr.js
+ * Fork from Croppr.js : https://github.com/jamesssooi/Croppr.js
  * 
  * A JavaScript image cropper that's lightweight, awesome, and has
  * zero dependencies.
  * 
  * (C) 2017 James Ooi. Released under the MIT License.
+ *
+ * Fork by Adrien du Repaire : https://github.com/devdanim/DmCroppr.js
+ * 
+ * 
  */
 
 import CropprCore from './core';
