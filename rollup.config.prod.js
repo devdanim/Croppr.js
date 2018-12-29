@@ -1,6 +1,6 @@
 import babel from 'rollup-plugin-babel';
-import uglify from 'rollup-plugin-uglify';
 import postcss from 'rollup-plugin-postcss';
+import { terser } from "rollup-plugin-terser";
 
 
 var banner = `/**
@@ -19,17 +19,19 @@ var banner = `/**
 `
 
 export default {
-  entry: 'src/index.js',
+  input: 'src/index.js',
+  output: {
+    file: 'dist/dnm-croppr.min.js',
+    format: 'umd',
+    name: 'Croppr',
+    banner: banner
+  },
   plugins: [ 
   	postcss({
   		extensions: [ '.css' ],
-      	inject: false
+      extract: "dist/dnm-croppr.css"
     }),
   	babel(),
-  	uglify()
-  ],
-  format: 'umd',
-  moduleName: 'Croppr',
-  dest: 'dist/dnm-croppr.min.js',
-  banner: banner
+    terser()
+  ]
 };

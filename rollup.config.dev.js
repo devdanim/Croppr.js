@@ -19,19 +19,21 @@ var banner = `/**
 `
 
 export default {
-  entry: 'src/index.js',
+  input: 'src/index.js',
+  output: {
+    file: 'dist/dnm-croppr.js',
+    format: 'umd',
+    name: 'Croppr',
+    banner: banner
+  },
   plugins: [
     postcss({
       extensions: [ '.css' ],
-      inject: false
+      extract: "dist/dnm-croppr.css"
     }),
     babel(),
     cleanup({
       comments: 'jsdoc'
     })
-  ],
-  format: 'umd',
-  moduleName: 'Croppr',
-  dest: 'dist/dnm-croppr.js',
-  banner: banner
+  ]
 };
