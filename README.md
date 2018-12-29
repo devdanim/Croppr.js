@@ -1,4 +1,4 @@
-![Croppr.js](https://raw.githubusercontent.com/devdanim/DmCroppr.js/master/assets/logo.png)
+![Croppr.js](https://raw.githubusercontent.com/devdanim/dnm-croppr/master/assets/logo.png)
 
 ### Fork from Cropper.js, a vanilla JavaScript image cropper that's lightweight, awesome, and has absolutely zero dependencies.
 
@@ -24,21 +24,20 @@
 **Via NPM:**
 
 ```bash
-npm install dmcroppr -—save
+npm install dnm-croppr -—save
 ```
 
 ```javascript
-// ES6 import
-import Croppr from 'dmcroppr';
+// ES6 import - JS + CSS
+import Croppr from 'dnm-croppr';
 ```
-_Note: Don't forget to bundle or include croppr.css!_
 
 
 **Via script tag:**
 
 ```html
-<link href="path/to/dmcroppr.css" rel="stylesheet"/>
-<script src="path/to/dmcroppr.js"></script>
+<link href="path/to/dnm-croppr.css" rel="stylesheet"/>
+<script src="path/to/dnm-croppr"></script>
 ```
 
 

@@ -6,7 +6,7 @@
  * 
  * (C) 2017 James Ooi. Released under the MIT License.
  *
- * Fork by Adrien du Repaire : https://github.com/devdanim/DmCroppr.js
+ * Fork by Adrien du Repaire : https://github.com/devdanim/dnm-croppr
  * 
  * 
  */
