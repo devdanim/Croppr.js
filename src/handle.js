@@ -55,7 +55,6 @@ export default class Handle {
 
     function onMouseMove(e) {
       e.stopPropagation();
-
       // Notify parent
       self.eventBus.dispatchEvent(new CustomEvent('handlemove', {
         detail: { mouseX: e.clientX, mouseY: e.clientY }

@@ -56,8 +56,9 @@ export default class Croppr extends CropprCore {
    * @param {Number} x
    * @param {Number} y
    */
-  moveTo(x, y) {
+  moveTo(x, y, constrain = true) {
     this.box.move(x, y);
+    if(constrain === true) this.strictlyConstrain();
     this.redraw();
 
     // Call the callback
@@ -74,8 +75,13 @@ export default class Croppr extends CropprCore {
    * @param {Array} origin The origin point to resize from.
    *      Defaults to [0.5, 0.5] (center).
    */
-  resizeTo(width, height, origin = [.5, .5]) {
+  resizeTo(width, height, origin = null, constrain = true) {
+
+    if(origin === null) origin = [.5, .5];
+    else constrain = false;
+
     this.box.resize(width, height, origin);
+    if(constrain === true) this.strictlyConstrain();
     this.redraw();
 
     // Call the callback
@@ -91,8 +97,13 @@ export default class Croppr extends CropprCore {
    * @param {Array} origin The origin point to resize from.
    *      Defaults to [0.5, 0.5] (center).
    */
-  scaleBy(factor, origin = [.5, .5]) {
+  scaleBy(factor, origin = null, constrain = true) {
+
+    if(origin === null) origin = [.5, .5];
+    else constrain = false;
+    
     this.box.scale(factor, origin);
+    if(constrain === true) this.strictlyConstrain();
     this.redraw();
 
     // Call the callback

@@ -73,7 +73,7 @@ export default class Box {
    * @param {Array} [origin] The origin point to resize from.
    *      Defaults to [0, 0] (top left).
    */
-  scale(factor, origin = [0, 0]) {
+  scale(factor, origin = [0, 0], containerWidth = null, containerHeight = null) {
     const newWidth = this.width() * factor;
     const newHeight = this.height() * factor;
     this.resize(newWidth, newHeight, origin);
@@ -118,6 +118,21 @@ export default class Box {
     return [x, y];
   }
 
+  //Return constrained ratio
+  getRatio(minRatio = null, maxRatio = null) {
+    if(minRatio === null) return null;
+    if(maxRatio === null) return minRatio;
+    const imageRatio = this.width()/this.height();
+    if(minRatio > maxRatio) {
+      let tempRatio = minRatio;
+      minRatio = maxRatio;
+      maxRatio = tempRatio;
+    }
+    if(imageRatio > maxRatio) return maxRatio;
+    else if(imageRatio < minRatio) return minRatio;
+    else return imageRatio;
+  }
+
   /**
    * Constrain the box to a fixed ratio.
    * @param {Number} ratio
@@ -126,19 +141,45 @@ export default class Box {
    * @param {String} [grow] The axis to grow to maintain the ratio.
    *     Defaults to 'height'.
    */
-  constrainToRatio(ratio, origin = [0, 0], grow = 'height') {
+  constrainToRatio(ratio = null, origin = [0, 0], grow = 'height', maxRatio = null) {
+
     if (ratio === null) { return; }
+
     const width = this.width();
     const height = this.height();
-    switch (grow) {
-      case 'height': // Grow height only
-        this.resize(this.width(), this.width() * ratio, origin);
-        break;
-      case 'width': // Grow width only
-        this.resize(this.height() * 1 / ratio, this.height(), origin);
-        break;
-      default: // Default: Grow height only
-        this.resize(this.width(), this.width() * ratio, origin);
+
+    if(maxRatio !== null) {
+
+      //If max ratio is defined, check if constraint is needed, then resize
+      let minRatio = ratio;
+      if(minRatio > maxRatio) {
+          minRatio = maxRatio;
+          maxRatio = ratio;
+      }
+      let cropRatio = width/height;
+
+      if( cropRatio < minRatio || cropRatio > maxRatio ) {
+        let constrainWidth = width;
+        let constrainHeight = height;
+        if(cropRatio > maxRatio) constrainHeight = width / maxRatio;
+        else constrainWidth = height * minRatio;
+        this.resize(constrainWidth, constrainHeight, origin);
+      } 
+
+    } else {
+
+      //If constraint is needed, resize by ratio 
+      switch (grow) {
+        case 'height': // Grow height only
+          this.resize(width, width / ratio, origin);
+          break;
+        case 'width': // Grow width only
+          this.resize(height * ratio, height, origin);
+          break;
+        default: // Default: Grow height only
+          this.resize(width, width / ratio, origin);
+      }
+
     }
 
     return this;
@@ -203,39 +244,31 @@ export default class Box {
    */
   constrainToSize(maxWidth = null, maxHeight = null,
     minWidth = null, minHeight = null,
-    origin = [0, 0], ratio = null) {
+    origin = [0, 0], minRatio = null, maxRatio = null) {
 
-    // Calculate new max/min widths & heights that constrains to the ratio
-    if (ratio) {
-      if (ratio > 1) {
-        maxWidth = maxHeight * 1 / ratio;
-        minHeight = minHeight * ratio;
-      } else if (ratio < 1) {
-        maxHeight = maxWidth * ratio;
-        minWidth = minHeight * 1 / ratio;
-      }
-    }
+    //Get ratio based on min and max values
+    let ratio = this.getRatio(minRatio, maxRatio);
 
     if (maxWidth && this.width() > maxWidth) {
       const newWidth = maxWidth,
-        newHeight = ratio === null ? this.height() : maxHeight;
+        newHeight = ratio === null ? this.height() : maxWidth / ratio;
       this.resize(newWidth, newHeight, origin);
     }
 
     if (maxHeight && this.height() > maxHeight) {
-      const newWidth = ratio === null ? this.width() : maxWidth,
+      const newWidth = ratio === null ? this.width() : maxHeight * ratio,
         newHeight = maxHeight;
       this.resize(newWidth, newHeight, origin);
     }
 
     if (minWidth && this.width() < minWidth) {
       const newWidth = minWidth,
-        newHeight = ratio === null ? this.height() : minHeight;
+        newHeight = ratio === null ? this.height() : minWidth / ratio;
       this.resize(newWidth, newHeight, origin);
     }
 
     if (minHeight && this.height() < minHeight) {
-      const newWidth = ratio === null ? this.width() : minWidth,
+      const newWidth = ratio === null ? this.width() : minHeight * ratio,
         newHeight = minHeight;
       this.resize(newWidth, newHeight, origin);
     }

@@ -34,14 +34,14 @@ const HANDLES = [
 export default class CropprCore {
   constructor(element, options, deferred = false) {
 
+    //Get preview, before parsing options
+    if(options.preview) options.preview = this.getElement(options.preview);
+
     // Parse options
     this.options = CropprCore.parseOptions(options || {});
 
     // Get target img element
-    if (!element.nodeName) {
-      element = document.querySelector(element);
-      if (element == null) { throw 'Unable to find element.' }
-    }
+    element = this.getElement(element)
     if (!element.getAttribute('src')) {
       throw 'Image src not provided.'
     }
@@ -51,6 +51,11 @@ export default class CropprCore {
     this._restore = {
       parent: element.parentNode,
       element: element
+    }
+
+    if(this.options.preview) {
+      this._restore.preview = this.options.preview;
+      this._restore.parentPreview = this.options.preview.parentNode;
     }
 
     // Wait until image is loaded before proceeding
@@ -71,7 +76,8 @@ export default class CropprCore {
     this.createDOM(element);
 
     // Process option values
-    this.options.convertToPixels(this.cropperEl);
+    this.getSourceSize();
+    this.options.convertToPixels(this.imageEl, this.sourceSize);
 
     // Listen for events from children
     this.attachHandlerEvents();
@@ -79,14 +85,68 @@ export default class CropprCore {
     this.attachOverlayEvents();
 
     // Bootstrap this cropper instance
-    this.box = this.initializeBox(this.options);
-    this.redraw();
+    this.initializeBox();
+    this.redraw();    
 
     // Set the initalized flag to true and call the callback
     this._initialized = true;
     if (this.options.onInitialize !== null) {
       this.options.onInitialize(this);
     }
+    //Temporary FIX, see resizePreview() comments
+    this.resizePreview();
+
+    this.cropperEl.onwheel = event => {
+      event.preventDefault();
+      let { deltaY } = event;
+      const maxDelta = 0.05;
+      let coeff = deltaY > 0 ? 1 : -1;
+      deltaY = Math.abs(deltaY) / 100;
+      deltaY = deltaY > maxDelta ? maxDelta : deltaY
+      deltaY = 1 + coeff*deltaY;
+      this.scaleBy(deltaY);
+    }
+
+
+    if(this.options.responsive) {
+      let onResize;
+      const resizeFunc = () => {
+        let newOptions = this.options;
+        let cropData = this.responsiveData;
+
+        const controlKeys = ["x","y","width","height"];
+        for(var i=0; i<controlKeys.length; i++) {
+          cropData[controlKeys[i]] *= 100;
+          cropData[controlKeys[i]] = cropData[controlKeys[i]] > 100 ? 100 : cropData[controlKeys[i]] < 0 ? 0 : cropData[controlKeys[i]];
+        }
+
+        newOptions.startPosition = [cropData.x, cropData.y, "%"];
+        newOptions.startSize = [cropData.width, cropData.height, "%"];
+        newOptions = CropprCore.parseOptions(newOptions);
+        newOptions.convertToPixels(this.imageEl, this.sourceSize);
+ 
+        this.initializeBox(newOptions);
+        this.redraw();
+      }
+      window.onresize = function() {
+          clearTimeout(onResize);
+          onResize = setTimeout(() => {
+              resizeFunc();
+          }, 100);
+      };
+    }
+
+  }
+
+  //Return element by html element or string
+  getElement(element, type) {
+    if(element) {
+      if (!element.nodeName) {
+        element = document.querySelector(element);
+        if (element == null) { throw 'Unable to find element.' }
+      }
+    }
+    return element
   }
 
   /**
@@ -144,6 +204,92 @@ export default class CropprCore {
 
     // And then finally insert it into the document
     targetEl.parentElement.replaceChild(this.containerEl, targetEl);
+
+    //Create Live Preview
+    this.setLivePreview();
+
+  }
+
+  //If preview isn't null, create preview DOM
+  setLivePreview() {
+
+    if(this.options.preview) {
+
+      this.preview = {};
+      this.preview.parent = this.options.preview;
+      this.preview.parent.style.position = "relative";
+
+      let new_container = document.createElement("div");
+      this.preview.container = this.preview.parent.appendChild(new_container);
+      this.preview.container.style.overflow = "hidden";
+      this.preview.container.style.position = "absolute";
+      this.preview.container.style.top = "50%";
+      this.preview.container.style.left = "50%";
+      this.preview.container.style.transform = "translate(-50%, -50%)";
+
+    }
+  }
+
+  resizePreview(cropData = null) {
+    if(cropData === null) cropData = this.getValue("ratio");
+    if(this.preview && cropData.width && cropData.height) {
+      const targetWidth = this.preview.parent.offsetWidth;
+      const targetHeight = this.preview.parent.offsetHeight;
+      const targetRatio = targetWidth / targetHeight;
+
+      const cropWidth = this.sourceSize.width * cropData.width;
+      const cropHeight = this.sourceSize.height * cropData.height;
+
+      const cropRatio = cropWidth / cropHeight;
+      let containerWidth = targetWidth;
+      let containerHeight = targetHeight;
+      if (targetRatio > cropRatio) {
+          containerWidth = containerHeight * cropRatio;
+      } else {
+          containerHeight = containerWidth / cropRatio;
+      }
+
+      //Can't explain why this affect this.getValue(), need to be fixed
+      //console.log(1, this.getValue("ratio"));
+      this.preview.container.style.width = containerWidth + "px";
+      this.preview.container.style.height = containerHeight + "px";
+      //console.log(2, this.getValue("ratio"));
+
+      let resizeWidth = (this.sourceSize.width * containerWidth) / cropWidth;
+      let resizeHeight = (this.sourceSize.height * containerHeight) / cropHeight;
+
+      let deltaX = -cropData.x * resizeWidth;
+      let deltaY = -cropData.y * resizeHeight;
+
+      this.preview.image.style.width = resizeWidth + "px";
+      this.preview.image.style.height = resizeHeight + "px";
+
+      this.preview.image.style.left = deltaX + "px";
+      this.preview.image.style.top = deltaY + "px";
+    }
+  }
+
+  strictlyConstrain(opts = null, origin = null) {
+
+    let origins;
+    if(origin === null) {
+      origins = [[0,0], [1,1]];
+      origin = [.5, .5];
+    } else {
+      origins = [origin];
+    }
+
+    if(opts === null) opts = this.options;
+
+    const { width: parentWidth, height: parentHeight } = this.imageEl.getBoundingClientRect();
+
+    this.box.constrainToRatio(opts.aspectRatio, origin, "height", opts.maxAspectRatio);
+    this.box.constrainToSize(opts.maxSize.width, opts.maxSize.height, opts.minSize.width, opts.minSize.height, origin, opts.aspectRatio, opts.maxAspectRatio);
+
+    origins.map( newOrigin => {
+      this.box.constrainToBoundary(parentWidth, parentHeight, newOrigin);
+    } )
+    
   }
 
   /**
@@ -153,7 +299,9 @@ export default class CropprCore {
   setImage(src) {
     // Add onload listener to reinitialize box
     this.imageEl.onload = () => {
-      this.box = this.initializeBox(this.options);
+      this.getSourceSize();
+      this.options.convertToPixels(this.imageEl, this.sourceSize);
+      this.initializeBox();
       this.redraw();
     }
 
@@ -168,6 +316,10 @@ export default class CropprCore {
    */
   destroy() {
     this._restore.parent.replaceChild(this._restore.element, this.containerEl);
+    if(this.options.preview) {
+      this.preview.image.parentNode.removeChild(this.preview.image);
+      this.preview.container.parentNode.removeChild(this.preview.container);
+    }
   }
 
   /**
@@ -175,38 +327,97 @@ export default class CropprCore {
    * @param {Object} opts The options.
    * @returns {Box}
    */
-  initializeBox(opts) {
-    // Create initial box
-    const width = opts.startSize.width;
-    const height = opts.startSize.height;
-    let box = new Box(0, 0, width, height)
+  initializeBox(opts = null) {
 
-    // Maintain ratio
-    box.constrainToRatio(opts.aspectRatio, [0.5, 0.5]);
+    if(opts === null) opts = this.options;
 
-    // Maintain minimum/maximum size
-    const min = opts.minSize;
-    const max = opts.maxSize;
-    box.constrainToSize(max.width, max.height, min.width, min.height,
-      [0.5, 0.5], opts.aspectRatio);
+    //Define box size
+    let boxWidth = opts.startSize.width;
+    let boxHeight = opts.startSize.height;
 
-    // Constrain to boundary
-    const parentWidth = this.cropperEl.offsetWidth;
-    const parentHeight = this.cropperEl.offsetHeight;
-    box.constrainToBoundary(parentWidth, parentHeight, [0.5, 0.5]);
+    if(opts.minSize) {
+      if(boxWidth < opts.minSize.width) boxWidth = opts.minSize.width;
+      else if(boxWidth < opts.maxSize.width) boxWidth = opts.maxSize.width;
+    }
+    if(opts.maxSize) {
+      if(boxHeight < opts.minSize.height) boxHeight = opts.minSize.height;
+      else if(boxHeight < opts.maxSize.height) boxHeight = opts.maxSize.height;
+    }
 
-    // Move to center
-    const x = (this.cropperEl.offsetWidth / 2) - (box.width() / 2);
-    const y = (this.cropperEl.offsetHeight / 2) - (box.height() / 2);
-    box.move(x, y);
+    //Create initial box
+    let box = new Box(0, 0, boxWidth, boxHeight);
+
+    //Define crop position
+    let x = 0;
+    let y = 0;
+    if(opts.startPosition === null) {
+      // Move to center
+      const { width: parentWidth, height: parentHeight } = this.imageEl.getBoundingClientRect();
+      x = (parentWidth / 2) - (boxWidth / 2);
+      y = (parentHeight / 2) - (boxHeight / 2);
+    } else {
+      x = opts.startPosition.x;
+      y = opts.startPosition.y;
+    }
+    box.move(x,y);
+
+    //Reset preview img
+    if(this.preview) {
+
+      //If image in live preview already exists, delete it
+      if(this.preview.image) {
+        this.preview.image.parentNode.removeChild(this.preview.image);
+        this.preview.image = null;
+      }
+      let new_img = document.createElement("img");
+      new_img.src = this.imageEl.src;
+
+      this.preview.image = this.preview.container.appendChild(new_img);
+      this.preview.image.style.position = "relative";
+
+    }
+
+    this.box = box;
+    this.strictlyConstrain(opts);
 
     return box;
   }
+
+  getSourceSize() {
+    //Get raw image dimensions
+    this.sourceSize = {};
+    this.sourceSize.width = this.imageEl.naturalWidth;
+    this.sourceSize.height = this.imageEl.naturalHeight;
+    return this.sourceSize;
+  }
+
+  convertRealDataToPixel(data) {
+      const { width, height } = this.imageEl.getBoundingClientRect();
+      const factorX = this.sourceSize.width / width;
+      const factorY = this.sourceSize.height / height;
+      if(data.width) {
+        data.width /= factorX;
+      } 
+      if(data.x) {
+        data.x /= factorX;
+      }
+      if(data.height) {
+        data.height /= factorY;
+      } 
+      if(data.y) {
+        data.y /= factorY;
+      }
+      return data;
+    }
 
   /**
    * Draw visuals (border, handles, etc) for the current box.
    */
   redraw() {
+
+    //Resize Live Preview
+    this.resizePreview();
+
     // Round positional values to prevent subpixel coordinates, which can
     // result in element that is rendered blurly
     const width = Math.round(this.box.width()),
@@ -229,8 +440,9 @@ export default class CropprCore {
       // calculates the quadrant the box is in using bitwise operators.
       // Reference: https://stackoverflow.com/questions/9718059
       const center = this.box.getAbsolutePoint([.5, .5]);
-      const xSign = (center[0] - this.cropperEl.offsetWidth / 2) >> 31;
-      const ySign = (center[1] - this.cropperEl.offsetHeight / 2) >> 31;
+      const { width: parentWidth, height: parentHeight } = this.imageEl.getBoundingClientRect();
+      const xSign = (center[0] - parentWidth / 2) >> 31;
+      const ySign = (center[1] - parentHeight / 2) >> 31;
       const quadrant = (xSign ^ ySign) + ySign + ySign + 4;
 
       // The following equation calculates which handle index to bring
@@ -254,6 +466,7 @@ export default class CropprCore {
       }
     });
   }
+
 
   /**
    * Attach listeners for events emitted by the handles.
@@ -456,7 +669,7 @@ export default class CropprCore {
 
     // Maintain aspect ratio
     if (this.options.aspectRatio) {
-      const ratio = this.options.aspectRatio;
+      let ratio = this.options.aspectRatio;
       let isVerticalMovement = false;
       if (MULTI_AXIS) {
         isVerticalMovement = (mouseY > box.y1 + ratio * box.width()) ||
@@ -465,20 +678,21 @@ export default class CropprCore {
         isVerticalMovement = true;
       }
       const ratioMode = isVerticalMovement ? 'width' : 'height';
-      box.constrainToRatio(ratio, origin, ratioMode);
+      box.constrainToRatio(ratio, origin, ratioMode, this.options.maxAspectRatio);
     }
 
     // Maintain minimum/maximum size
-    const min = this.options.minSize;
-    const max = this.options.maxSize;
-    box.constrainToSize(max.width, max.height, min.width,
-      min.height, origin, this.options.aspectRatio);
-
+    box.constrainToSize(this.options.maxSize.width, this.options.maxSize.height, this.options.minSize.width, this.options.minSize.height,
+      origin, this.options.aspectRatio, this.options.maxAspectRatio);
+    
     // Constrain to boundary
-    const parentWidth = this.cropperEl.offsetWidth;
-    const parentHeight = this.cropperEl.offsetHeight;
-    box.constrainToBoundary(parentWidth, parentHeight, origin);
-
+    const { width: parentWidth, height: parentHeight } = this.imageEl.getBoundingClientRect();
+    let boundaryOrigins = [origin];
+    if(this.options.maxAspectRatio) boundaryOrigins = [[0, 0], [1, 1]];
+    boundaryOrigins.map( boundaryOrigin => {
+      box.constrainToBoundary(parentWidth, parentHeight, boundaryOrigin);
+    })
+    
     // Finally, update the visuals (border, handles, clipped image, etc)
     this.box = box;
     this.redraw();
@@ -494,6 +708,7 @@ export default class CropprCore {
    * Executes on handle move end.
    */
   onHandleMoveEnd(e) {
+
     // Trigger callback
     if (this.options.onCropEnd !== null) {
       this.options.onCropEnd(this.getValue());
@@ -521,6 +736,7 @@ export default class CropprCore {
     if (this.options.onCropStart !== null) {
       this.options.onCropStart(this.getValue());
     }
+
   }
 
   /**
@@ -572,39 +788,52 @@ export default class CropprCore {
     }
   }
 
-
   /**
    * Calculate the value of the crop region.
    */
   getValue(mode = null) {
     if (mode === null) { mode = this.options.returnMode; }
+    let cropData = {};
     if (mode == 'real') {
-      const actualWidth = this.imageEl.naturalWidth;
-      const actualHeight = this.imageEl.naturalHeight;
-      const { width: elementWidth, height: elementHeight } = this.imageEl.getBoundingClientRect();
-      const factorX = actualWidth / elementWidth;
-      const factorY = actualHeight / elementHeight;
-      return {
-        x: Math.round(this.box.x1 * factorX),
-        y: Math.round(this.box.y1 * factorY),
-        width: Math.round(this.box.width() * factorX),
-        height: Math.round(this.box.height() * factorY)
-      }
+      cropData = this.getValueAsRealData();
     } else if (mode == 'ratio') {
-      const { width: elementWidth, height: elementHeight } = this.imageEl.getBoundingClientRect();
-      return {
-        x: round(this.box.x1 / elementWidth, 3),
-        y: round(this.box.y1 / elementHeight, 3),
-        width: round(this.box.width() / elementWidth, 3),
-        height: round(this.box.height() / elementHeight, 3)
-      }
+      cropData = this.getValueAsRatio();
     } else if (mode == 'raw') {
-      return {
+      cropData = {
         x: Math.round(this.box.x1),
         y: Math.round(this.box.y1),
         width: Math.round(this.box.width()),
         height: Math.round(this.box.height())
       }
+    }
+    if(this.options.responsive) {
+      if(mode == "ratio") this.responsiveData = cropData;
+      else this.responsiveData = this.getValueAsRatio();
+    }
+    return cropData;
+  }
+
+  getValueAsRealData() {
+    const actualWidth = this.imageEl.naturalWidth;
+    const actualHeight = this.imageEl.naturalHeight;
+    const { width: elementWidth, height: elementHeight } = this.imageEl.getBoundingClientRect();
+    const factorX = actualWidth / elementWidth;
+    const factorY = actualHeight / elementHeight;
+    return {
+      x: Math.round(this.box.x1 * factorX),
+      y: Math.round(this.box.y1 * factorY),
+      width: Math.round(this.box.width() * factorX),
+      height: Math.round(this.box.height() * factorY)
+    }
+  }
+
+  getValueAsRatio() {
+    const { width: elementWidth, height: elementHeight } = this.imageEl.getBoundingClientRect();
+    return {
+      x: this.box.x1 / elementWidth,
+      y: this.box.y1 / elementHeight,
+      width: this.box.width() / elementWidth,
+      height: this.box.height() / elementHeight
     }
   }
 
@@ -614,25 +843,46 @@ export default class CropprCore {
   static parseOptions(opts) {
     const defaults = {
       aspectRatio: null,
-      maxSize: { width: null, height: null },
-      minSize: { width: null, height: null },
-      startSize: { width: 100, height: 100, unit: '%' },
+      maxAspectRatio: null,
+      maxSize: { width: null, height: null, unit: 'px', real: false },
+      minSize: { width: null, height: null, unit: 'px', real: false },
+      startSize: { width: 100, height: 100, unit: '%', real: false },
+      startPosition: null,
       returnMode: 'real',
       onInitialize: null,
       onCropStart: null,
       onCropMove: null,
       onCropEnd: null,
+      preview: null,
+      responsive: true
     }
+
+    //Parse preview
+    let preview = null;
+    if(opts.preview !== null) preview = opts.preview;
+
+    //Parse responsive
+    let responsive = null;
+    if(opts.responsive !== null) responsive = opts.responsive;
 
     // Parse aspect ratio
     let aspectRatio = null;
-    if (opts.aspectRatio !== undefined) {
-      if (typeof (opts.aspectRatio) === 'number') {
-        aspectRatio = opts.aspectRatio
-      } else if (opts.aspectRatio instanceof Array) {
-        aspectRatio = opts.aspectRatio[1] / opts.aspectRatio[0];
+    let maxAspectRatio = null;
+    const ratioKeys = ["aspectRatio", "maxAspectRatio"];
+    for(var i=0; i<ratioKeys.length; i++) {
+      if (opts[ratioKeys[i]] !== undefined) {
+        if (typeof (opts[ratioKeys[i]]) === 'number') {
+          let ratio = opts[ratioKeys[i]];
+          if(ratioKeys[i] === "aspectRatio") aspectRatio = ratio;
+          else maxAspectRatio = ratio;
+        } else if (opts[ratioKeys[i]] instanceof Array) {
+          let ratio = opts[ratioKeys[i]][1] / opts[ratioKeys[i]][0];
+          if(ratioKeys[i] === "aspectRatio") aspectRatio = ratio;
+          else maxAspectRatio = ratio;
+        }
       }
     }
+    
 
     // Parse max width/height
     let maxSize = null;
@@ -640,7 +890,8 @@ export default class CropprCore {
       maxSize = {
         width: opts.maxSize[0] || null,
         height: opts.maxSize[1] || null,
-        unit: opts.maxSize[2] || 'px'
+        unit: opts.maxSize[2] || 'px',
+        real: opts.minSize[3] || false
       }
     }
 
@@ -650,7 +901,8 @@ export default class CropprCore {
       minSize = {
         width: opts.minSize[0] || null,
         height: opts.minSize[1] || null,
-        unit: opts.minSize[2] || 'px'
+        unit: opts.minSize[2] || 'px',
+        real: opts.minSize[3] || false
       }
     }
 
@@ -660,7 +912,19 @@ export default class CropprCore {
       startSize = {
         width: opts.startSize[0] || null,
         height: opts.startSize[1] || null,
-        unit: opts.startSize[2] || '%'
+        unit: opts.startSize[2] || '%',
+        real: opts.startSize[3] || false
+      }
+    }
+
+    // Parse start position
+    let startPosition = null;
+    if (opts.startPosition !== undefined && opts.startPosition !== null) {
+      startPosition = {
+        x: opts.startPosition[0] || null,
+        y: opts.startPosition[1] || null,
+        unit: opts.startPosition[2] || '%',
+        real: opts.startPosition[3] || false
       }
     }
 
@@ -702,39 +966,80 @@ export default class CropprCore {
     }
 
     // Create function to convert % values to pixels
-    const convertToPixels = function (container) {
-      const width = container.offsetWidth;
-      const height = container.offsetHeight;
-
+    const convertToPixels = function (imageEl, sourceSize = null) {
+      const { width, height } = imageEl.getBoundingClientRect();
       // Convert sizes
-      const sizeKeys = ['maxSize', 'minSize', 'startSize'];
+      const sizeKeys = ['maxSize', 'minSize', 'startSize', 'startPosition'];
       for (let i = 0; i < sizeKeys.length; i++) {
         const key = sizeKeys[i];
         if (this[key] !== null) {
           if (this[key].unit == '%') {
-            if (this[key].width !== null) {
-              this[key].width = (this[key].width / 100) * width;
-            }
-            if (this[key].height !== null) {
-              this[key].height = (this[key].height / 100) * height;
-            }
+            this[key] = convertPercentToPixel(width, height, this[key]);
+          } else if(this[key].real === true && sourceSize) {
+            this[key] = convertRealDataToPixel(width, height, sourceSize.width, sourceSize.height, this[key]);
           }
           delete this[key].unit;
         }
       }
+      if(this.minSize) {
+        if(this.minSize.width > width) this.minSize.width = width;
+        if(this.minSize.height > height) this.minSize.height = height;
+      }
+      if(this.startSize && this.startPosition) {
+        let xEnd = this.startPosition.x + this.startSize.width;
+        if(xEnd > width) this.startPosition.x -= (xEnd-width);
+        let yEnd = this.startPosition.y + this.startSize.height;
+        if(yEnd > height) this.startPosition.y -= (yEnd-height);
+      }
+    }
+
+    const convertPercentToPixel = function (width, height, data) {
+      if (data.width) {
+        data.width = (data.width / 100) * width;
+      } else if (data.x) {
+        data.x = (data.x / 100) * width;
+      }
+
+      if (data.height) {
+        data.height = (data.height / 100) * height;
+      } else if (data.y) {
+        data.y = (data.y / 100) * height;
+      } 
+
+      return data;
+    }
+
+    const convertRealDataToPixel = function (width, height, sourceWidth, sourceHeight, data) {
+      const factorX = sourceWidth / width;
+      const factorY = sourceHeight / height;
+      if(data.width) {
+        data.width /= factorX;
+      } else if(data.x) {
+        data.x /= factorX;
+      }
+      if(data.height) {
+        data.height /= factorY;
+      } else if(data.y) {
+        data.y /= factorY;
+      }
+      return data;
     }
 
     const defaultValue = (v, d) => (v !== null ? v : d);
     return {
       aspectRatio: defaultValue(aspectRatio, defaults.aspectRatio),
+      maxAspectRatio: defaultValue(maxAspectRatio, defaults.maxAspectRatio),
       maxSize: defaultValue(maxSize, defaults.maxSize),
       minSize: defaultValue(minSize, defaults.minSize),
       startSize: defaultValue(startSize, defaults.startSize),
+      startPosition: defaultValue(startPosition, defaults.startPosition),
       returnMode: defaultValue(returnMode, defaults.returnMode),
       onInitialize: defaultValue(onInitialize, defaults.onInitialize),
       onCropStart: defaultValue(onCropStart, defaults.onCropStart),
       onCropMove: defaultValue(onCropMove, defaults.onCropMove),
       onCropEnd: defaultValue(onCropEnd, defaults.onCropEnd),
+      preview: defaultValue(preview, defaults.preview),
+      responsive: defaultValue(responsive, defaults.responsive),
       convertToPixels: convertToPixels
     }
   }

@@ -16,6 +16,9 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
+*.sublime-project
+*.sublime-workspace
+
 # nyc test coverage
 .nyc_output
 

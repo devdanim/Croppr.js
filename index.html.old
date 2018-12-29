@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+    <script src="dist/croppr.js"></script>
+    <link rel="stylesheet" href="dist/croppr.css">
+</head>
+
+<style>
+.imgContainer {
+    width:500px;
+    margin:auto;
+}
+
+.imgContainer img {
+    max-width: 100%;
+}
+    
+#cropPreview {
+    margin-top:30px;
+    margin-left:auto;
+    margin-right:auto;
+    width: 400px;
+    height: 300px;
+    background-color:black;
+}
+    
+</style>
+
+<body>
+    <h1>Croppr.js</h1>
+    <div class="imgContainer">
+        <img src="assets/test.jpg" id="cropper">
+    </div>
+    <div id="cropPreview"></div>
+
+    <script>
+        var crop_preview;
+        var croppr = new Croppr('#cropper', {
+            returnMode: "ratio",
+            onInitialize: (instance) => { 
+                var source = instance.imageEl;
+                var target = document.getElementById("cropPreview");
+                crop_preview = new cropPreview(source, target); 
+            },
+            //onCropEnd: (data) => {},
+            //onCropStart: (data) => { console.log('start', data); },
+            onCropMove: (data) => { 
+                crop_preview.resize(data.width, data.height, data.x, data.y);
+            }
+        });
+        
+        function cropPreview(source, target) {
+
+            this.preview;
+            this.container;
+            this.target;
+            this.imageWidth;
+            this.imageHeight;
+
+            this.init = function(source, target) {
+
+                var new_container = document.createElement("div");
+                this.container = target.appendChild(new_container);
+                this.container.style.overflow = "hidden";
+                this.container.style.position = "absolute";
+                this.container.style.top = "50%";
+                this.container.style.left = "50%";
+                this.container.style.transform = "translate(-50%, -50%)";
+
+                this.imageWidth = source.naturalWidth;
+                this.imageHeight = source.naturalHeight;
+
+                var new_img = document.createElement("img");
+                new_img.src = source.src;
+
+                this.preview = this.container.appendChild(new_img);
+                this.preview.style.position = "relative";
+                target.style.position = "relative";
+                this.target = target;
+
+                this.resize(1, 1, 0, 0);
+            } 
+
+            this.resize = function(width, height, x, y) {
+                var targetWidth = this.target.clientWidth;
+                var targetHeight = this.target.clientHeight;
+                var targetRatio = targetWidth/targetHeight;
+
+                var cropWidth = this.imageWidth * width;
+                var cropHeight = this.imageHeight * height;
+
+                var cropRatio = cropWidth/cropHeight;
+
+                if(targetRatio > cropRatio) {
+                    var containerHeight = targetHeight;
+                    var containerWidth = containerHeight*cropRatio;
+                } else {
+                    var containerWidth = targetWidth;
+                    var containerHeight = containerWidth/cropRatio;
+                }
+                
+                this.container.style.width = containerWidth + "px";
+                this.container.style.height = containerHeight + "px";
+                
+                var resizeWidth = this.imageWidth * containerWidth / cropWidth;
+                var resizeHeight = this.imageHeight * containerHeight / cropHeight;
+                
+                var deltaX = -x * resizeWidth;
+                var deltaY = -y * resizeHeight;
+                
+                this.preview.style.width = resizeWidth + "px";
+                this.preview.style.height = resizeHeight + "px";
+                
+                this.preview.style.left = deltaX + "px";
+                this.preview.style.top = deltaY + "px";
+
+            }
+
+            this.init(source, target);
+
+        }
+    </script>
+</body>
+</html>

@@ -322,6 +322,8 @@ var Box = function () {
     key: 'scale',
     value: function scale(factor) {
       var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0, 0];
+      var containerWidth = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var containerHeight = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
       var newWidth = this.width() * factor;
       var newHeight = this.height() * factor;
       this.resize(newWidth, newHeight, origin);
@@ -368,6 +370,21 @@ var Box = function () {
       var y = this.y1 + this.height() * point[1];
       return [x, y];
     }
+  }, {
+    key: 'getRatio',
+    value: function getRatio() {
+      var minRatio = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var maxRatio = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      if (minRatio === null) return null;
+      if (maxRatio === null) return minRatio;
+      var imageRatio = this.width() / this.height();
+      if (minRatio > maxRatio) {
+        var tempRatio = minRatio;
+        minRatio = maxRatio;
+        maxRatio = tempRatio;
+      }
+      if (imageRatio > maxRatio) return maxRatio;else if (imageRatio < minRatio) return minRatio;else return imageRatio;
+    }
     /**
      * Constrain the box to a fixed ratio.
      * @param {Number} ratio
@@ -378,23 +395,40 @@ var Box = function () {
      */
   }, {
     key: 'constrainToRatio',
-    value: function constrainToRatio(ratio) {
+    value: function constrainToRatio() {
+      var ratio = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
       var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [0, 0];
       var grow = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'height';
+      var maxRatio = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
       if (ratio === null) {
         return;
       }
       var width = this.width();
       var height = this.height();
-      switch (grow) {
-        case 'height':
-          this.resize(this.width(), this.width() * ratio, origin);
-          break;
-        case 'width':
-          this.resize(this.height() * 1 / ratio, this.height(), origin);
-          break;
-        default:
-          this.resize(this.width(), this.width() * ratio, origin);
+      if (maxRatio !== null) {
+        var minRatio = ratio;
+        if (minRatio > maxRatio) {
+          minRatio = maxRatio;
+          maxRatio = ratio;
+        }
+        var cropRatio = width / height;
+        if (cropRatio < minRatio || cropRatio > maxRatio) {
+          var constrainWidth = width;
+          var constrainHeight = height;
+          if (cropRatio > maxRatio) constrainHeight = width / maxRatio;else constrainWidth = height * minRatio;
+          this.resize(constrainWidth, constrainHeight, origin);
+        }
+      } else {
+        switch (grow) {
+          case 'height':
+            this.resize(width, width / ratio, origin);
+            break;
+          case 'width':
+            this.resize(height * ratio, height, origin);
+            break;
+          default:
+            this.resize(width, width / ratio, origin);
+        }
       }
       return this;
     }
@@ -465,33 +499,26 @@ var Box = function () {
       var minWidth = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
       var minHeight = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
       var origin = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [0, 0];
-      var ratio = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
-      if (ratio) {
-        if (ratio > 1) {
-          maxWidth = maxHeight * 1 / ratio;
-          minHeight = minHeight * ratio;
-        } else if (ratio < 1) {
-          maxHeight = maxWidth * ratio;
-          minWidth = minHeight * 1 / ratio;
-        }
-      }
+      var minRatio = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+      var maxRatio = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : null;
+      var ratio = this.getRatio(minRatio, maxRatio);
       if (maxWidth && this.width() > maxWidth) {
         var newWidth = maxWidth,
-            newHeight = ratio === null ? this.height() : maxHeight;
+            newHeight = ratio === null ? this.height() : maxWidth / ratio;
         this.resize(newWidth, newHeight, origin);
       }
       if (maxHeight && this.height() > maxHeight) {
-        var _newWidth = ratio === null ? this.width() : maxWidth,
+        var _newWidth = ratio === null ? this.width() : maxHeight * ratio,
             _newHeight = maxHeight;
         this.resize(_newWidth, _newHeight, origin);
       }
       if (minWidth && this.width() < minWidth) {
         var _newWidth2 = minWidth,
-            _newHeight2 = ratio === null ? this.height() : minHeight;
+            _newHeight2 = ratio === null ? this.height() : minWidth / ratio;
         this.resize(_newWidth2, _newHeight2, origin);
       }
       if (minHeight && this.height() < minHeight) {
-        var _newWidth3 = ratio === null ? this.width() : minWidth,
+        var _newWidth3 = ratio === null ? this.width() : minHeight * ratio,
             _newHeight3 = minHeight;
         this.resize(_newWidth3, _newHeight3, origin);
       }
@@ -549,13 +576,9 @@ var CropprCore = function () {
     var _this = this;
     var deferred = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
     classCallCheck(this, CropprCore);
+    if (options.preview) options.preview = this.getElement(options.preview);
     this.options = CropprCore.parseOptions(options || {});
-    if (!element.nodeName) {
-      element = document.querySelector(element);
-      if (element == null) {
-        throw 'Unable to find element.';
-      }
-    }
+    element = this.getElement(element);
     if (!element.getAttribute('src')) {
       throw 'Image src not provided.';
     }
@@ -564,6 +587,10 @@ var CropprCore = function () {
       parent: element.parentNode,
       element: element
     };
+    if (this.options.preview) {
+      this._restore.preview = this.options.preview;
+      this._restore.parentPreview = this.options.preview.parentNode;
+    }
     if (!deferred) {
       if (element.width === 0 || element.height === 0) {
         element.onload = function () {
@@ -577,17 +604,69 @@ var CropprCore = function () {
   createClass(CropprCore, [{
     key: 'initialize',
     value: function initialize(element) {
+      var _this2 = this;
       this.createDOM(element);
-      this.options.convertToPixels(this.cropperEl);
+      this.getSourceSize();
+      this.options.convertToPixels(this.imageEl, this.sourceSize);
       this.attachHandlerEvents();
       this.attachRegionEvents();
       this.attachOverlayEvents();
-      this.box = this.initializeBox(this.options);
+      this.initializeBox();
       this.redraw();
       this._initialized = true;
       if (this.options.onInitialize !== null) {
         this.options.onInitialize(this);
       }
+      this.resizePreview();
+      this.cropperEl.onwheel = function (event) {
+        event.preventDefault();
+        var deltaY = event.deltaY;
+        var maxDelta = 0.05;
+        var coeff = deltaY > 0 ? 1 : -1;
+        deltaY = Math.abs(deltaY) / 100;
+        deltaY = deltaY > maxDelta ? maxDelta : deltaY;
+        deltaY = 1 + coeff * deltaY;
+        _this2.scaleBy(deltaY);
+      };
+      if (this.options.responsive) {
+        (function () {
+          var onResize = void 0;
+          var resizeFunc = function resizeFunc() {
+            var newOptions = _this2.options;
+            var cropData = _this2.responsiveData;
+            var controlKeys = ["x", "y", "width", "height"];
+            for (var i = 0; i < controlKeys.length; i++) {
+              cropData[controlKeys[i]] *= 100;
+              cropData[controlKeys[i]] = cropData[controlKeys[i]] > 100 ? 100 : cropData[controlKeys[i]] < 0 ? 0 : cropData[controlKeys[i]];
+            }
+            newOptions.startPosition = [cropData.x, cropData.y, "%"];
+            newOptions.startSize = [cropData.width, cropData.height, "%"];
+            newOptions = CropprCore.parseOptions(newOptions);
+            newOptions.convertToPixels(_this2.imageEl, _this2.sourceSize);
+            _this2.initializeBox(newOptions);
+            _this2.redraw();
+          };
+          window.onresize = function () {
+            clearTimeout(onResize);
+            onResize = setTimeout(function () {
+              resizeFunc();
+            }, 100);
+          };
+        })();
+      }
+    }
+  }, {
+    key: 'getElement',
+    value: function getElement(element, type) {
+      if (element) {
+        if (!element.nodeName) {
+          element = document.querySelector(element);
+          if (element == null) {
+            throw 'Unable to find element.';
+          }
+        }
+      }
+      return element;
     }
   }, {
     key: 'createDOM',
@@ -623,6 +702,77 @@ var CropprCore = function () {
       this.cropperEl.appendChild(handleContainerEl);
       this.containerEl.appendChild(this.cropperEl);
       targetEl.parentElement.replaceChild(this.containerEl, targetEl);
+      this.setLivePreview();
+    }
+  }, {
+    key: 'setLivePreview',
+    value: function setLivePreview() {
+      if (this.options.preview) {
+        this.preview = {};
+        this.preview.parent = this.options.preview;
+        this.preview.parent.style.position = "relative";
+        var new_container = document.createElement("div");
+        this.preview.container = this.preview.parent.appendChild(new_container);
+        this.preview.container.style.overflow = "hidden";
+        this.preview.container.style.position = "absolute";
+        this.preview.container.style.top = "50%";
+        this.preview.container.style.left = "50%";
+        this.preview.container.style.transform = "translate(-50%, -50%)";
+      }
+    }
+  }, {
+    key: 'resizePreview',
+    value: function resizePreview() {
+      var cropData = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      if (cropData === null) cropData = this.getValue("ratio");
+      if (this.preview && cropData.width && cropData.height) {
+        var targetWidth = this.preview.parent.offsetWidth;
+        var targetHeight = this.preview.parent.offsetHeight;
+        var targetRatio = targetWidth / targetHeight;
+        var cropWidth = this.sourceSize.width * cropData.width;
+        var cropHeight = this.sourceSize.height * cropData.height;
+        var cropRatio = cropWidth / cropHeight;
+        var containerWidth = targetWidth;
+        var containerHeight = targetHeight;
+        if (targetRatio > cropRatio) {
+          containerWidth = containerHeight * cropRatio;
+        } else {
+          containerHeight = containerWidth / cropRatio;
+        }
+        this.preview.container.style.width = containerWidth + "px";
+        this.preview.container.style.height = containerHeight + "px";
+        var resizeWidth = this.sourceSize.width * containerWidth / cropWidth;
+        var resizeHeight = this.sourceSize.height * containerHeight / cropHeight;
+        var deltaX = -cropData.x * resizeWidth;
+        var deltaY = -cropData.y * resizeHeight;
+        this.preview.image.style.width = resizeWidth + "px";
+        this.preview.image.style.height = resizeHeight + "px";
+        this.preview.image.style.left = deltaX + "px";
+        this.preview.image.style.top = deltaY + "px";
+      }
+    }
+  }, {
+    key: 'strictlyConstrain',
+    value: function strictlyConstrain() {
+      var _this3 = this;
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var origins = void 0;
+      if (origin === null) {
+        origins = [[0, 0], [1, 1]];
+        origin = [.5, .5];
+      } else {
+        origins = [origin];
+      }
+      if (opts === null) opts = this.options;
+      var _imageEl$getBoundingC = this.imageEl.getBoundingClientRect(),
+          parentWidth = _imageEl$getBoundingC.width,
+          parentHeight = _imageEl$getBoundingC.height;
+      this.box.constrainToRatio(opts.aspectRatio, origin, "height", opts.maxAspectRatio);
+      this.box.constrainToSize(opts.maxSize.width, opts.maxSize.height, opts.minSize.width, opts.minSize.height, origin, opts.aspectRatio, opts.maxAspectRatio);
+      origins.map(function (newOrigin) {
+        _this3.box.constrainToBoundary(parentWidth, parentHeight, newOrigin);
+      });
     }
     /**
      * Changes the image src.
@@ -631,10 +781,12 @@ var CropprCore = function () {
   }, {
     key: 'setImage',
     value: function setImage(src) {
-      var _this2 = this;
+      var _this4 = this;
       this.imageEl.onload = function () {
-        _this2.box = _this2.initializeBox(_this2.options);
-        _this2.redraw();
+        _this4.getSourceSize();
+        _this4.options.convertToPixels(_this4.imageEl, _this4.sourceSize);
+        _this4.initializeBox();
+        _this4.redraw();
       };
       this.imageEl.src = src;
       this.imageClippedEl.src = src;
@@ -644,6 +796,10 @@ var CropprCore = function () {
     key: 'destroy',
     value: function destroy() {
       this._restore.parent.replaceChild(this._restore.element, this.containerEl);
+      if (this.options.preview) {
+        this.preview.image.parentNode.removeChild(this.preview.image);
+        this.preview.container.parentNode.removeChild(this.preview.container);
+      }
     }
     /**
      * Create a new box region with a set of options.
@@ -652,26 +808,80 @@ var CropprCore = function () {
      */
   }, {
     key: 'initializeBox',
-    value: function initializeBox(opts) {
-      var width = opts.startSize.width;
-      var height = opts.startSize.height;
-      var box = new Box(0, 0, width, height);
-      box.constrainToRatio(opts.aspectRatio, [0.5, 0.5]);
-      var min = opts.minSize;
-      var max = opts.maxSize;
-      box.constrainToSize(max.width, max.height, min.width, min.height, [0.5, 0.5], opts.aspectRatio);
-      var parentWidth = this.cropperEl.offsetWidth;
-      var parentHeight = this.cropperEl.offsetHeight;
-      box.constrainToBoundary(parentWidth, parentHeight, [0.5, 0.5]);
-      var x = this.cropperEl.offsetWidth / 2 - box.width() / 2;
-      var y = this.cropperEl.offsetHeight / 2 - box.height() / 2;
+    value: function initializeBox() {
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      if (opts === null) opts = this.options;
+      var boxWidth = opts.startSize.width;
+      var boxHeight = opts.startSize.height;
+      if (opts.minSize) {
+        if (boxWidth < opts.minSize.width) boxWidth = opts.minSize.width;else if (boxWidth < opts.maxSize.width) boxWidth = opts.maxSize.width;
+      }
+      if (opts.maxSize) {
+        if (boxHeight < opts.minSize.height) boxHeight = opts.minSize.height;else if (boxHeight < opts.maxSize.height) boxHeight = opts.maxSize.height;
+      }
+      var box = new Box(0, 0, boxWidth, boxHeight);
+      var x = 0;
+      var y = 0;
+      if (opts.startPosition === null) {
+        var _imageEl$getBoundingC2 = this.imageEl.getBoundingClientRect(),
+            parentWidth = _imageEl$getBoundingC2.width,
+            parentHeight = _imageEl$getBoundingC2.height;
+        x = parentWidth / 2 - boxWidth / 2;
+        y = parentHeight / 2 - boxHeight / 2;
+      } else {
+        x = opts.startPosition.x;
+        y = opts.startPosition.y;
+      }
       box.move(x, y);
+      if (this.preview) {
+        if (this.preview.image) {
+          this.preview.image.parentNode.removeChild(this.preview.image);
+          this.preview.image = null;
+        }
+        var new_img = document.createElement("img");
+        new_img.src = this.imageEl.src;
+        this.preview.image = this.preview.container.appendChild(new_img);
+        this.preview.image.style.position = "relative";
+      }
+      this.box = box;
+      this.strictlyConstrain(opts);
       return box;
+    }
+  }, {
+    key: 'getSourceSize',
+    value: function getSourceSize() {
+      this.sourceSize = {};
+      this.sourceSize.width = this.imageEl.naturalWidth;
+      this.sourceSize.height = this.imageEl.naturalHeight;
+      return this.sourceSize;
+    }
+  }, {
+    key: 'convertRealDataToPixel',
+    value: function convertRealDataToPixel(data) {
+      var _imageEl$getBoundingC3 = this.imageEl.getBoundingClientRect(),
+          width = _imageEl$getBoundingC3.width,
+          height = _imageEl$getBoundingC3.height;
+      var factorX = this.sourceSize.width / width;
+      var factorY = this.sourceSize.height / height;
+      if (data.width) {
+        data.width /= factorX;
+      }
+      if (data.x) {
+        data.x /= factorX;
+      }
+      if (data.height) {
+        data.height /= factorY;
+      }
+      if (data.y) {
+        data.y /= factorY;
+      }
+      return data;
     }
   }, {
     key: 'redraw',
     value: function redraw() {
-      var _this3 = this;
+      var _this5 = this;
+      this.resizePreview();
       var width = Math.round(this.box.width()),
           height = Math.round(this.box.height()),
           x1 = Math.round(this.box.x1),
@@ -679,17 +889,20 @@ var CropprCore = function () {
           x2 = Math.round(this.box.x2),
           y2 = Math.round(this.box.y2);
       window.requestAnimationFrame(function () {
-        _this3.regionEl.style.transform = 'translate(' + x1 + 'px, ' + y1 + 'px)';
-        _this3.regionEl.style.width = width + 'px';
-        _this3.regionEl.style.height = height + 'px';
-        _this3.imageClippedEl.style.clip = 'rect(' + y1 + 'px, ' + x2 + 'px, ' + y2 + 'px, ' + x1 + 'px)';
-        var center = _this3.box.getAbsolutePoint([.5, .5]);
-        var xSign = center[0] - _this3.cropperEl.offsetWidth / 2 >> 31;
-        var ySign = center[1] - _this3.cropperEl.offsetHeight / 2 >> 31;
+        _this5.regionEl.style.transform = 'translate(' + x1 + 'px, ' + y1 + 'px)';
+        _this5.regionEl.style.width = width + 'px';
+        _this5.regionEl.style.height = height + 'px';
+        _this5.imageClippedEl.style.clip = 'rect(' + y1 + 'px, ' + x2 + 'px, ' + y2 + 'px, ' + x1 + 'px)';
+        var center = _this5.box.getAbsolutePoint([.5, .5]);
+        var _imageEl$getBoundingC4 = _this5.imageEl.getBoundingClientRect(),
+            parentWidth = _imageEl$getBoundingC4.width,
+            parentHeight = _imageEl$getBoundingC4.height;
+        var xSign = center[0] - parentWidth / 2 >> 31;
+        var ySign = center[1] - parentHeight / 2 >> 31;
         var quadrant = (xSign ^ ySign) + ySign + ySign + 4;
         var foregroundHandleIndex = -2 * quadrant + 8;
-        for (var i = 0; i < _this3.handles.length; i++) {
-          var handle = _this3.handles[i];
+        for (var i = 0; i < _this5.handles.length; i++) {
+          var handle = _this5.handles[i];
           var handleWidth = handle.el.offsetWidth;
           var handleHeight = handle.el.offsetHeight;
           var left = x1 + width * handle.position[0] - handleWidth / 2;
@@ -854,14 +1067,17 @@ var CropprCore = function () {
           isVerticalMovement = true;
         }
         var ratioMode = isVerticalMovement ? 'width' : 'height';
-        box.constrainToRatio(ratio, origin, ratioMode);
+        box.constrainToRatio(ratio, origin, ratioMode, this.options.maxAspectRatio);
       }
-      var min = this.options.minSize;
-      var max = this.options.maxSize;
-      box.constrainToSize(max.width, max.height, min.width, min.height, origin, this.options.aspectRatio);
-      var parentWidth = this.cropperEl.offsetWidth;
-      var parentHeight = this.cropperEl.offsetHeight;
-      box.constrainToBoundary(parentWidth, parentHeight, origin);
+      box.constrainToSize(this.options.maxSize.width, this.options.maxSize.height, this.options.minSize.width, this.options.minSize.height, origin, this.options.aspectRatio, this.options.maxAspectRatio);
+      var _imageEl$getBoundingC5 = this.imageEl.getBoundingClientRect(),
+          parentWidth = _imageEl$getBoundingC5.width,
+          parentHeight = _imageEl$getBoundingC5.height;
+      var boundaryOrigins = [origin];
+      if (this.options.maxAspectRatio) boundaryOrigins = [[0, 0], [1, 1]];
+      boundaryOrigins.map(function (boundaryOrigin) {
+        box.constrainToBoundary(parentWidth, parentHeight, boundaryOrigin);
+      });
       this.box = box;
       this.redraw();
       if (this.options.onCropMove !== null) {
@@ -936,59 +1152,88 @@ var CropprCore = function () {
       if (mode === null) {
         mode = this.options.returnMode;
       }
+      var cropData = {};
       if (mode == 'real') {
-        var actualWidth = this.imageEl.naturalWidth;
-        var actualHeight = this.imageEl.naturalHeight;
-        var _imageEl$getBoundingC = this.imageEl.getBoundingClientRect(),
-            elementWidth = _imageEl$getBoundingC.width,
-            elementHeight = _imageEl$getBoundingC.height;
-        var factorX = actualWidth / elementWidth;
-        var factorY = actualHeight / elementHeight;
-        return {
-          x: Math.round(this.box.x1 * factorX),
-          y: Math.round(this.box.y1 * factorY),
-          width: Math.round(this.box.width() * factorX),
-          height: Math.round(this.box.height() * factorY)
-        };
+        cropData = this.getValueAsRealData();
       } else if (mode == 'ratio') {
-        var _imageEl$getBoundingC2 = this.imageEl.getBoundingClientRect(),
-            _elementWidth = _imageEl$getBoundingC2.width,
-            _elementHeight = _imageEl$getBoundingC2.height;
-        return {
-          x: round(this.box.x1 / _elementWidth, 3),
-          y: round(this.box.y1 / _elementHeight, 3),
-          width: round(this.box.width() / _elementWidth, 3),
-          height: round(this.box.height() / _elementHeight, 3)
-        };
+        cropData = this.getValueAsRatio();
       } else if (mode == 'raw') {
-        return {
+        cropData = {
           x: Math.round(this.box.x1),
           y: Math.round(this.box.y1),
           width: Math.round(this.box.width()),
           height: Math.round(this.box.height())
         };
       }
+      if (this.options.responsive) {
+        if (mode == "ratio") this.responsiveData = cropData;else this.responsiveData = this.getValueAsRatio();
+      }
+      return cropData;
+    }
+  }, {
+    key: 'getValueAsRealData',
+    value: function getValueAsRealData() {
+      var actualWidth = this.imageEl.naturalWidth;
+      var actualHeight = this.imageEl.naturalHeight;
+      var _imageEl$getBoundingC6 = this.imageEl.getBoundingClientRect(),
+          elementWidth = _imageEl$getBoundingC6.width,
+          elementHeight = _imageEl$getBoundingC6.height;
+      var factorX = actualWidth / elementWidth;
+      var factorY = actualHeight / elementHeight;
+      return {
+        x: Math.round(this.box.x1 * factorX),
+        y: Math.round(this.box.y1 * factorY),
+        width: Math.round(this.box.width() * factorX),
+        height: Math.round(this.box.height() * factorY)
+      };
+    }
+  }, {
+    key: 'getValueAsRatio',
+    value: function getValueAsRatio() {
+      var _imageEl$getBoundingC7 = this.imageEl.getBoundingClientRect(),
+          elementWidth = _imageEl$getBoundingC7.width,
+          elementHeight = _imageEl$getBoundingC7.height;
+      return {
+        x: this.box.x1 / elementWidth,
+        y: this.box.y1 / elementHeight,
+        width: this.box.width() / elementWidth,
+        height: this.box.height() / elementHeight
+      };
     }
   }], [{
     key: 'parseOptions',
     value: function parseOptions(opts) {
       var defaults$$1 = {
         aspectRatio: null,
-        maxSize: { width: null, height: null },
-        minSize: { width: null, height: null },
-        startSize: { width: 100, height: 100, unit: '%' },
+        maxAspectRatio: null,
+        maxSize: { width: null, height: null, unit: 'px', real: false },
+        minSize: { width: null, height: null, unit: 'px', real: false },
+        startSize: { width: 100, height: 100, unit: '%', real: false },
+        startPosition: null,
         returnMode: 'real',
         onInitialize: null,
         onCropStart: null,
         onCropMove: null,
-        onCropEnd: null
+        onCropEnd: null,
+        preview: null,
+        responsive: true
       };
+      var preview = null;
+      if (opts.preview !== null) preview = opts.preview;
+      var responsive = null;
+      if (opts.responsive !== null) responsive = opts.responsive;
       var aspectRatio = null;
-      if (opts.aspectRatio !== undefined) {
-        if (typeof opts.aspectRatio === 'number') {
-          aspectRatio = opts.aspectRatio;
-        } else if (opts.aspectRatio instanceof Array) {
-          aspectRatio = opts.aspectRatio[1] / opts.aspectRatio[0];
+      var maxAspectRatio = null;
+      var ratioKeys = ["aspectRatio", "maxAspectRatio"];
+      for (var i = 0; i < ratioKeys.length; i++) {
+        if (opts[ratioKeys[i]] !== undefined) {
+          if (typeof opts[ratioKeys[i]] === 'number') {
+            var ratio = opts[ratioKeys[i]];
+            if (ratioKeys[i] === "aspectRatio") aspectRatio = ratio;else maxAspectRatio = ratio;
+          } else if (opts[ratioKeys[i]] instanceof Array) {
+            var _ratio = opts[ratioKeys[i]][1] / opts[ratioKeys[i]][0];
+            if (ratioKeys[i] === "aspectRatio") aspectRatio = _ratio;else maxAspectRatio = _ratio;
+          }
         }
       }
       var maxSize = null;
@@ -996,7 +1241,8 @@ var CropprCore = function () {
         maxSize = {
           width: opts.maxSize[0] || null,
           height: opts.maxSize[1] || null,
-          unit: opts.maxSize[2] || 'px'
+          unit: opts.maxSize[2] || 'px',
+          real: opts.minSize[3] || false
         };
       }
       var minSize = null;
@@ -1004,7 +1250,8 @@ var CropprCore = function () {
         minSize = {
           width: opts.minSize[0] || null,
           height: opts.minSize[1] || null,
-          unit: opts.minSize[2] || 'px'
+          unit: opts.minSize[2] || 'px',
+          real: opts.minSize[3] || false
         };
       }
       var startSize = null;
@@ -1012,7 +1259,17 @@ var CropprCore = function () {
         startSize = {
           width: opts.startSize[0] || null,
           height: opts.startSize[1] || null,
-          unit: opts.startSize[2] || '%'
+          unit: opts.startSize[2] || '%',
+          real: opts.startSize[3] || false
+        };
+      }
+      var startPosition = null;
+      if (opts.startPosition !== undefined && opts.startPosition !== null) {
+        startPosition = {
+          x: opts.startPosition[0] || null,
+          y: opts.startPosition[1] || null,
+          unit: opts.startPosition[2] || '%',
+          real: opts.startPosition[3] || false
         };
       }
       var onInitialize = null;
@@ -1043,47 +1300,85 @@ var CropprCore = function () {
         }
         returnMode = s;
       }
-      var convertToPixels = function convertToPixels(container) {
-        var width = container.offsetWidth;
-        var height = container.offsetHeight;
-        var sizeKeys = ['maxSize', 'minSize', 'startSize'];
-        for (var i = 0; i < sizeKeys.length; i++) {
-          var key = sizeKeys[i];
+      var convertToPixels = function convertToPixels(imageEl) {
+        var sourceSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var _imageEl$getBoundingC8 = imageEl.getBoundingClientRect(),
+            width = _imageEl$getBoundingC8.width,
+            height = _imageEl$getBoundingC8.height;
+        var sizeKeys = ['maxSize', 'minSize', 'startSize', 'startPosition'];
+        for (var _i = 0; _i < sizeKeys.length; _i++) {
+          var key = sizeKeys[_i];
           if (this[key] !== null) {
             if (this[key].unit == '%') {
-              if (this[key].width !== null) {
-                this[key].width = this[key].width / 100 * width;
-              }
-              if (this[key].height !== null) {
-                this[key].height = this[key].height / 100 * height;
-              }
+              this[key] = convertPercentToPixel(width, height, this[key]);
+            } else if (this[key].real === true && sourceSize) {
+              this[key] = convertRealDataToPixel(width, height, sourceSize.width, sourceSize.height, this[key]);
             }
             delete this[key].unit;
           }
         }
+        if (this.minSize) {
+          if (this.minSize.width > width) this.minSize.width = width;
+          if (this.minSize.height > height) this.minSize.height = height;
+        }
+        if (this.startSize && this.startPosition) {
+          var xEnd = this.startPosition.x + this.startSize.width;
+          if (xEnd > width) this.startPosition.x -= xEnd - width;
+          var yEnd = this.startPosition.y + this.startSize.height;
+          if (yEnd > height) this.startPosition.y -= yEnd - height;
+        }
+      };
+      var convertPercentToPixel = function convertPercentToPixel(width, height, data) {
+        if (data.width) {
+          data.width = data.width / 100 * width;
+        } else if (data.x) {
+          data.x = data.x / 100 * width;
+        }
+        if (data.height) {
+          data.height = data.height / 100 * height;
+        } else if (data.y) {
+          data.y = data.y / 100 * height;
+        }
+        return data;
+      };
+      var convertRealDataToPixel = function convertRealDataToPixel(width, height, sourceWidth, sourceHeight, data) {
+        var factorX = sourceWidth / width;
+        var factorY = sourceHeight / height;
+        if (data.width) {
+          data.width /= factorX;
+        } else if (data.x) {
+          data.x /= factorX;
+        }
+        if (data.height) {
+          data.height /= factorY;
+        } else if (data.y) {
+          data.y /= factorY;
+        }
+        return data;
       };
       var defaultValue = function defaultValue(v, d) {
         return v !== null ? v : d;
       };
       return {
         aspectRatio: defaultValue(aspectRatio, defaults$$1.aspectRatio),
+        maxAspectRatio: defaultValue(maxAspectRatio, defaults$$1.maxAspectRatio),
         maxSize: defaultValue(maxSize, defaults$$1.maxSize),
         minSize: defaultValue(minSize, defaults$$1.minSize),
         startSize: defaultValue(startSize, defaults$$1.startSize),
+        startPosition: defaultValue(startPosition, defaults$$1.startPosition),
         returnMode: defaultValue(returnMode, defaults$$1.returnMode),
         onInitialize: defaultValue(onInitialize, defaults$$1.onInitialize),
         onCropStart: defaultValue(onCropStart, defaults$$1.onCropStart),
         onCropMove: defaultValue(onCropMove, defaults$$1.onCropMove),
         onCropEnd: defaultValue(onCropEnd, defaults$$1.onCropEnd),
+        preview: defaultValue(preview, defaults$$1.preview),
+        responsive: defaultValue(responsive, defaults$$1.responsive),
         convertToPixels: convertToPixels
       };
     }
   }]);
   return CropprCore;
 }();
-function round(value, decimals) {
-  return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
-}
 
 var Croppr$1 = function (_CropprCore) {
   inherits(Croppr, _CropprCore);
@@ -1128,7 +1423,9 @@ var Croppr$1 = function (_CropprCore) {
   }, {
     key: 'moveTo',
     value: function moveTo(x, y) {
+      var constrain = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       this.box.move(x, y);
+      if (constrain === true) this.strictlyConstrain();
       this.redraw();
       if (this.options.onCropEnd !== null) {
         this.options.onCropEnd(this.getValue());
@@ -1145,8 +1442,11 @@ var Croppr$1 = function (_CropprCore) {
   }, {
     key: 'resizeTo',
     value: function resizeTo(width, height) {
-      var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [.5, .5];
+      var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var constrain = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+      if (origin === null) origin = [.5, .5];else constrain = false;
       this.box.resize(width, height, origin);
+      if (constrain === true) this.strictlyConstrain();
       this.redraw();
       if (this.options.onCropEnd !== null) {
         this.options.onCropEnd(this.getValue());
@@ -1162,8 +1462,11 @@ var Croppr$1 = function (_CropprCore) {
   }, {
     key: 'scaleBy',
     value: function scaleBy(factor) {
-      var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [.5, .5];
+      var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var constrain = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      if (origin === null) origin = [.5, .5];else constrain = false;
       this.box.scale(factor, origin);
+      if (constrain === true) this.strictlyConstrain();
       this.redraw();
       if (this.options.onCropEnd !== null) {
         this.options.onCropEnd(this.getValue());
