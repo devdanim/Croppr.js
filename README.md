@@ -1,21 +1,30 @@
 ![Croppr.js](https://raw.githubusercontent.com/jamesssooi/Croppr.js/master/assets/logo.png)
 
-### A vanilla JavaScript image cropper that's lightweight, awesome, and has absolutely zero dependencies.
+### Fork from Cropper.js, a vanilla JavaScript image cropper that's lightweight, awesome, and has absolutely zero dependencies.
 
 * Lightweight (<6kb minified and gzipped)
 * Made only with native, delicious vanilla JS
 * Zero dependencies
 * Supports touch devices!
-* Includes TypeScript typings!
 
-**[Try it out in the demo →](https://jamesssooi.github.io/Croppr.js)**
+**[Original Project →](https://jamesssooi.github.io/Croppr.js)**
+
+## Fork features
+
+* Live preview 
+* Responsive
+* Min and Max aspect ratio
+* Set startPosition
+* Set crop data with real image px values (for startSize, startPosition, minSize, maxSize)
+* Support scaling with mousewheel 
+
 
 ## Installation
 
 **Via NPM:**
 
 ```bash
-npm install croppr -—save
+npm install dmcroppr -—save
 ```
 
 ```javascript
@@ -23,7 +32,7 @@ npm install croppr -—save
 var Croppr = require('croppr');
 
 // ES6 import
-import Croppr from 'croppr';
+import Croppr from 'dmcroppr';
 ```
 _Note: Don't forget to bundle or include croppr.css!_
 
