@@ -205,7 +205,6 @@ Define the container for live preview.
 * Default: `null`
 * Possible values: If container ID is "preview", value can be `"#preview"` or an `Element` object as `document.getElementById("preview")`
 
-s
 
 ## Methods
 
