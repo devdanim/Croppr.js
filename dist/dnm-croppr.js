@@ -638,6 +638,7 @@
       var _this = this;
       var deferred = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       _classCallCheck(this, CropprCore);
+      this.initOptions = options;
       this.options = this.parseOptions(options);
       element = this.getElement(element);
       if (!element.getAttribute('src')) {
@@ -838,14 +839,16 @@
        */
     }, {
       key: "setImage",
-      value: function setImage(src) {
+      value: function setImage(src, callback) {
         var _this4 = this;
         this.imageEl.onload = function () {
           _this4.getSourceSize();
+          _this4.options = _this4.parseOptions(_this4.initOptions);
           _this4.convertOptionsToPixels();
           _this4.initializeBox(null, false);
           _this4.strictlyConstrain();
           _this4.redraw();
+          if (callback) callback();
         };
         this.imageEl.src = src;
         this.imageClippedEl.src = src;
@@ -1519,7 +1522,8 @@
     }, {
       key: "setImage",
       value: function setImage(src) {
-        return _get(_getPrototypeOf(Croppr.prototype), "setImage", this).call(this, src);
+        var callback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        return _get(_getPrototypeOf(Croppr.prototype), "setImage", this).call(this, src, callback);
       }
     }, {
       key: "destroy",

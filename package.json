@@ -1,11 +1,11 @@
 {
   "name": "dnm-croppr",
-  "version": "2.3.9",
+  "version": "2.4.2",
   "description": "A fork of original Croppr.js, a vanilla JavaScript image cropper, with advanced options.",
   "main": "src/index.js",
   "scripts": {
     "build": "rollup --config rollup.config.dev.js",
-    "watch": "onchange \"src/**/*.*\" -v -- npm run build",
+    "dev": "onchange \"src/**/*.*\" -v -- npm run build",
     "production": "rollup --config rollup.config.prod.js & cleancss dist/dnm-croppr.css -o dist/dnm-croppr.min.css",
     "dist": "npm run build && npm run production"
   },

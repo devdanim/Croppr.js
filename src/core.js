@@ -34,6 +34,9 @@ const HANDLES = [
 export default class CropprCore {
   constructor(element, options, deferred = false) {    
 
+    //Save options before parsing
+    this.initOptions = options;
+
     // Parse options
     this.options = this.parseOptions(options);
 
@@ -295,15 +298,17 @@ export default class CropprCore {
    * Changes the image src.
    * @param {String} src
    */
-  setImage(src) {
+  setImage(src, callback) {
     // Add onload listener to reinitialize box
     this.imageEl.onload = () => {
       this.getSourceSize();
+      this.options = this.parseOptions(this.initOptions);
       this.convertOptionsToPixels();
       this.initializeBox(null, false);
       //Temporary FIX, see initialize()
       this.strictlyConstrain();
       this.redraw();
+      if(callback) callback()
     }
 
     // Change image source
