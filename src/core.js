@@ -86,8 +86,6 @@ export default class CropprCore {
 
     //Temporary FIX, see resizePreview() comments
     //Need a first redraw() to init cropprEl, imageEl dimensions
-    this.redraw();    
-
     this.strictlyConstrain();
     this.redraw();
 
@@ -127,7 +125,7 @@ export default class CropprCore {
         newOptions = this.convertOptionsToPixels(newOptions);
  
         this.initializeBox(newOptions);
-        this.redraw();
+        
       }
       window.onresize = function() {
           clearTimeout(onResize);
@@ -302,7 +300,9 @@ export default class CropprCore {
     this.imageEl.onload = () => {
       this.getSourceSize();
       this.convertOptionsToPixels();
-      this.initializeBox();
+      this.initializeBox(null, false);
+      //Temporary FIX, see initialize()
+      this.strictlyConstrain();
       this.redraw();
     }
 
@@ -380,6 +380,7 @@ export default class CropprCore {
 
     if(constrain === true) this.strictlyConstrain();
     this.box = box;
+    this.redraw();
 
     return box;
   }

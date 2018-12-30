@@ -673,7 +673,6 @@
         this.attachRegionEvents();
         this.attachOverlayEvents();
         this.initializeBox(null, false);
-        this.redraw();
         this.strictlyConstrain();
         this.redraw();
         this._initialized = true;
@@ -705,7 +704,6 @@
             newOptions = _this2.parseOptions(newOptions);
             newOptions = _this2.convertOptionsToPixels(newOptions);
             _this2.initializeBox(newOptions);
-            _this2.redraw();
           };
           window.onresize = function () {
             clearTimeout(onResize);
@@ -845,7 +843,8 @@
         this.imageEl.onload = function () {
           _this4.getSourceSize();
           _this4.convertOptionsToPixels();
-          _this4.initializeBox();
+          _this4.initializeBox(null, false);
+          _this4.strictlyConstrain();
           _this4.redraw();
         };
         this.imageEl.src = src;
@@ -906,6 +905,7 @@
         }
         if (constrain === true) this.strictlyConstrain();
         this.box = box;
+        this.redraw();
         return box;
       }
     }, {
