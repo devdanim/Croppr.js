@@ -128,7 +128,7 @@ The starting position of the crop region when it is initialized.
 
 _Note: `unit` accepts a value of **'px'** or **'%'**. Defaults to **'px'**._
 
-_Note: If `real` is true and `unit` is **'px'**, size is based on source image. If `real` is false, size is based on croppr container. Defaults to **false**._
+_If `real` is true and `unit` is **'px'**, size is based on source image. If `real` is false, size is based on croppr container. Defaults to **false**._
 
 
 #### **onCropStart**
@@ -232,15 +232,18 @@ Changes the image src. Returns the Croppr instance.
 Moves the crop region to the specified coordinates. Returns the Croppr instance.
 
 _Note: If `constrain` is **false**, crop region isn't limited by options. Default value is **true**._
-_Note: `mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
+
+_`mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
 
 #### resizeTo(width: number, height: number, _origin?: Array_, _constrain?: boolean_, _mode?: string_)
 
 Resizes the crop region to the specified size. `origin` is an optional argument that specifies the origin point (in ratio) to resize from in the format of `[x, y]`. Defaults to `[0.5, 0.5]` (center). Returns the Croppr instance.
 
 _Note: `origin` default value is **[.5, .5]**._
-_Note: If `constrain` is **false**, crop region isn't limited by options. Default value is **true**._
-_Note: `mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
+
+_If `constrain` is **false**, crop region isn't limited by options. Default value is **true**._
+
+_`mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
 
 #### setValue(data: Array, _constrain?: boolean_, _mode?: string_)
 
@@ -258,7 +261,8 @@ cropInstance.setValue(cropData, true, "real");
 ```
 
 _Note: If `constrain` is **false**, crop region isn't limited by options. Default value is **true**._
-_Note: `mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
+
+_`mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
 
 
 #### scaleBy(factor: number, _origin?: Array_)

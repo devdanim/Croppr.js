@@ -2,6 +2,8 @@
 
 dev
 
+.vscode
+
 # Logs
 logs
 *.log
