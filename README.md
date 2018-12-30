@@ -36,8 +36,8 @@ import Croppr from 'dnm-croppr';
 **Via script tag:**
 
 ```html
-<link href="path/to/dnm-croppr.css" rel="stylesheet"/>
-<script src="path/to/dnm-croppr"></script>
+<link href="path/to/dnm-croppr.min.css" rel="stylesheet"/>
+<script src="path/to/dnm-croppr.min.js"></script>
 ```
 
 
