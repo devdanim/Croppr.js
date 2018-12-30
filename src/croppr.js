@@ -56,9 +56,17 @@ export default class Croppr extends CropprCore {
    * @param {Number} x
    * @param {Number} y
    */
-  moveTo(x, y, constrain = true) {
+  moveTo(x, y, constrain = true, mode = "px") {
+
+    if(mode === "%" || mode === "real") {
+      let data = this.convertor( {x, y} , mode, "px")
+      x = data.x
+      y = data.y
+    }
+
     this.box.move(x, y);
-    if(constrain === true) this.strictlyConstrain();
+    if(constrain === true) this.strictlyConstrain(null, [0,0]);
+    
     this.redraw();
 
     // Call the callback
@@ -75,13 +83,23 @@ export default class Croppr extends CropprCore {
    * @param {Array} origin The origin point to resize from.
    *      Defaults to [0.5, 0.5] (center).
    */
-  resizeTo(width, height, origin = null, constrain = true) {
+  resizeTo(width, height, origin = null, constrain = true, mode = "px") {
+
+    if(mode === "%" || mode === "real") {
+      let data = {
+        width: width,
+        height: height
+      }
+      data = this.convertor( data, mode, "px")
+      width = data.width
+      height = data.height
+    }
 
     if(origin === null) origin = [.5, .5];
-    else constrain = false;
 
     this.box.resize(width, height, origin);
     if(constrain === true) this.strictlyConstrain();
+
     this.redraw();
 
     // Call the callback
@@ -89,6 +107,13 @@ export default class Croppr extends CropprCore {
       this.options.onCropEnd(this.getValue());
     }
     return this;
+  }
+
+  setValue(data, constrain = true, mode = "%") {
+    if(mode === "%" || mode === "real") data = this.convertor(data, mode, "px")
+    this.moveTo(data.x, data.y, false)
+    this.resizeTo(data.width, data.height, [0,0], constrain)
+    return this
   }
 
   /**
@@ -100,7 +125,6 @@ export default class Croppr extends CropprCore {
   scaleBy(factor, origin = null, constrain = true) {
 
     if(origin === null) origin = [.5, .5];
-    else constrain = false;
     
     this.box.scale(factor, origin);
     if(constrain === true) this.strictlyConstrain();

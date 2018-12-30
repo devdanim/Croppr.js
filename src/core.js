@@ -32,13 +32,10 @@ const HANDLES = [
  * Core class for Croppr containing most of its functional logic.
  */
 export default class CropprCore {
-  constructor(element, options, deferred = false) {
-
-    //Get preview, before parsing options
-    if(options.preview) options.preview = this.getElement(options.preview);
+  constructor(element, options, deferred = false) {    
 
     // Parse options
-    this.options = CropprCore.parseOptions(options || {});
+    this.options = this.parseOptions(options);
 
     // Get target img element
     element = this.getElement(element)
@@ -77,7 +74,7 @@ export default class CropprCore {
 
     // Process option values
     this.getSourceSize();
-    this.options.convertToPixels(this.imageEl, this.sourceSize);
+    this.convertOptionsToPixels();
 
     // Listen for events from children
     this.attachHandlerEvents();
@@ -85,17 +82,21 @@ export default class CropprCore {
     this.attachOverlayEvents();
 
     // Bootstrap this cropper instance
-    this.initializeBox();
+    this.initializeBox(null, false);
+
+    //Temporary FIX, see resizePreview() comments
+    //Need a first redraw() to init cropprEl, imageEl dimensions
     this.redraw();    
+
+    this.strictlyConstrain();
+    this.redraw();
 
     // Set the initalized flag to true and call the callback
     this._initialized = true;
     if (this.options.onInitialize !== null) {
       this.options.onInitialize(this);
     }
-    //Temporary FIX, see resizePreview() comments
-    this.resizePreview();
-
+    
     this.cropperEl.onwheel = event => {
       event.preventDefault();
       let { deltaY } = event;
@@ -122,8 +123,8 @@ export default class CropprCore {
 
         newOptions.startPosition = [cropData.x, cropData.y, "%"];
         newOptions.startSize = [cropData.width, cropData.height, "%"];
-        newOptions = CropprCore.parseOptions(newOptions);
-        newOptions.convertToPixels(this.imageEl, this.sourceSize);
+        newOptions = this.parseOptions(newOptions);
+        newOptions = this.convertOptionsToPixels(newOptions);
  
         this.initializeBox(newOptions);
         this.redraw();
@@ -300,7 +301,7 @@ export default class CropprCore {
     // Add onload listener to reinitialize box
     this.imageEl.onload = () => {
       this.getSourceSize();
-      this.options.convertToPixels(this.imageEl, this.sourceSize);
+      this.convertOptionsToPixels();
       this.initializeBox();
       this.redraw();
     }
@@ -327,7 +328,7 @@ export default class CropprCore {
    * @param {Object} opts The options.
    * @returns {Box}
    */
-  initializeBox(opts = null) {
+  initializeBox(opts = null, constrain = true) {
 
     if(opts === null) opts = this.options;
 
@@ -359,7 +360,7 @@ export default class CropprCore {
       x = opts.startPosition.x;
       y = opts.startPosition.y;
     }
-    box.move(x,y);
+    box.move(x, y);
 
     //Reset preview img
     if(this.preview) {
@@ -377,8 +378,8 @@ export default class CropprCore {
 
     }
 
+    if(constrain === true) this.strictlyConstrain();
     this.box = box;
-    this.strictlyConstrain(opts);
 
     return box;
   }
@@ -391,7 +392,8 @@ export default class CropprCore {
     return this.sourceSize;
   }
 
-  convertRealDataToPixel(data) {
+  convertor(data, inputMode, outputMode) {
+    const convertRealDataToPixel = data => {
       const { width, height } = this.imageEl.getBoundingClientRect();
       const factorX = this.sourceSize.width / width;
       const factorY = this.sourceSize.height / height;
@@ -409,6 +411,65 @@ export default class CropprCore {
       }
       return data;
     }
+    const convertPercentToPixel = data => {
+      const { width, height } = this.imageEl.getBoundingClientRect();
+      if (data.width) {
+        data.width = (data.width / 100) * width;
+      } 
+      if (data.x) {
+        data.x = (data.x / 100) * width;
+      }
+
+      if (data.height) {
+        data.height = (data.height / 100) * height;
+      } 
+      if (data.y) {
+        data.y = (data.y / 100) * height;
+      } 
+      return data;
+    }
+    if(inputMode === "real" && outputMode === "px") {
+      return convertRealDataToPixel(data)
+    } else if(inputMode === "%" && outputMode === "px") {
+      return convertPercentToPixel(data)
+    }
+    return null
+  }
+
+  convertOptionsToPixels(opts = null) {
+    let setOptions = false
+    if(opts === null) {
+      opts = this.options
+      setOptions = true
+    }
+    const { width, height } = this.imageEl.getBoundingClientRect();
+    // Convert sizes
+    const sizeKeys = ['maxSize', 'minSize', 'startSize', 'startPosition'];
+    for (let i = 0; i < sizeKeys.length; i++) {
+      const key = sizeKeys[i];
+      if (opts[key] !== null) {
+        if (opts[key].unit == '%') {
+          opts[key] = this.convertor(opts[key], "%", "px");
+        } else if(opts[key].real === true) {
+          opts[key] = this.convertor(opts[key], "real", "px");
+        }
+        delete opts[key].unit;
+      }
+    }
+    if(opts.minSize) {
+      if(opts.minSize.width > width) opts.minSize.width = width;
+      if(opts.minSize.height > height) opts.minSize.height = height;
+    }
+    if(opts.startSize && opts.startPosition) {
+      let xEnd = opts.startPosition.x + opts.startSize.width;
+      if(xEnd > width) opts.startPosition.x -= (xEnd-width);
+      let yEnd = opts.startPosition.y + opts.startSize.height;
+      if(yEnd > height) opts.startPosition.y -= (yEnd-height);
+    }
+    if(setOptions) this.options = opts
+    return opts
+  }
+
 
   /**
    * Draw visuals (border, handles, etc) for the current box.
@@ -840,7 +901,8 @@ export default class CropprCore {
   /**
    * Parse user options and set default values.
    */
-  static parseOptions(opts) {
+  parseOptions(opts = null) {
+    if(opts === null) opts = this.options
     const defaults = {
       aspectRatio: null,
       maxAspectRatio: null,
@@ -859,7 +921,7 @@ export default class CropprCore {
 
     //Parse preview
     let preview = null;
-    if(opts.preview !== null) preview = opts.preview;
+    if(opts.preview !== null) preview = this.getElement(opts.preview);
 
     //Parse responsive
     let responsive = null;
@@ -963,67 +1025,8 @@ export default class CropprCore {
         throw "Invalid return mode.";
       }
       returnMode = s;
-    }
+    } 
 
-    // Create function to convert % values to pixels
-    const convertToPixels = function (imageEl, sourceSize = null) {
-      const { width, height } = imageEl.getBoundingClientRect();
-      // Convert sizes
-      const sizeKeys = ['maxSize', 'minSize', 'startSize', 'startPosition'];
-      for (let i = 0; i < sizeKeys.length; i++) {
-        const key = sizeKeys[i];
-        if (this[key] !== null) {
-          if (this[key].unit == '%') {
-            this[key] = convertPercentToPixel(width, height, this[key]);
-          } else if(this[key].real === true && sourceSize) {
-            this[key] = convertRealDataToPixel(width, height, sourceSize.width, sourceSize.height, this[key]);
-          }
-          delete this[key].unit;
-        }
-      }
-      if(this.minSize) {
-        if(this.minSize.width > width) this.minSize.width = width;
-        if(this.minSize.height > height) this.minSize.height = height;
-      }
-      if(this.startSize && this.startPosition) {
-        let xEnd = this.startPosition.x + this.startSize.width;
-        if(xEnd > width) this.startPosition.x -= (xEnd-width);
-        let yEnd = this.startPosition.y + this.startSize.height;
-        if(yEnd > height) this.startPosition.y -= (yEnd-height);
-      }
-    }
-
-    const convertPercentToPixel = function (width, height, data) {
-      if (data.width) {
-        data.width = (data.width / 100) * width;
-      } else if (data.x) {
-        data.x = (data.x / 100) * width;
-      }
-
-      if (data.height) {
-        data.height = (data.height / 100) * height;
-      } else if (data.y) {
-        data.y = (data.y / 100) * height;
-      } 
-
-      return data;
-    }
-
-    const convertRealDataToPixel = function (width, height, sourceWidth, sourceHeight, data) {
-      const factorX = sourceWidth / width;
-      const factorY = sourceHeight / height;
-      if(data.width) {
-        data.width /= factorX;
-      } else if(data.x) {
-        data.x /= factorX;
-      }
-      if(data.height) {
-        data.height /= factorY;
-      } else if(data.y) {
-        data.y /= factorY;
-      }
-      return data;
-    }
 
     const defaultValue = (v, d) => (v !== null ? v : d);
     return {
@@ -1039,8 +1042,7 @@ export default class CropprCore {
       onCropMove: defaultValue(onCropMove, defaults.onCropMove),
       onCropEnd: defaultValue(onCropEnd, defaults.onCropEnd),
       preview: defaultValue(preview, defaults.preview),
-      responsive: defaultValue(responsive, defaults.responsive),
-      convertToPixels: convertToPixels
+      responsive: defaultValue(responsive, defaults.responsive)
     }
   }
 }
