@@ -387,6 +387,15 @@ export default class CropprCore {
     this.box = box;
     this.redraw();
 
+    //Hide some handles if there are 2 ratios
+    for(var i=0; i<this.handles.length; i++) {
+      if(this.options.maxAspectRatio && (this.handles[i].position[0] == 0.5 || this.handles[i].position[1] == 0.5) ) {
+        this.handles[i].el.style.display = "none";
+      } else {
+        this.handles[i].el.style.display = "block";
+      }
+    }
+
     return box;
   }
 
