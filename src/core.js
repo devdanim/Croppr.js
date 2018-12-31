@@ -72,12 +72,12 @@ export default class CropprCore {
    * Initialize the Croppr instance
    */
   initialize(element) {
+
     // Create DOM elements
     this.createDOM(element);
 
     // Process option values
     this.getSourceSize();
-    this.convertOptionsToPixels();
 
     // Listen for events from children
     this.attachHandlerEvents();
@@ -85,12 +85,13 @@ export default class CropprCore {
     this.attachOverlayEvents();
 
     // Bootstrap this cropper instance
-    this.initializeBox(null, false);
-
+    this.showModal("init")
+    this.initializeBox(null, false)
     //Temporary FIX, see resizePreview() comments
     //Need a first redraw() to init cropprEl, imageEl dimensions
-    this.strictlyConstrain();
-    this.redraw();
+    this.strictlyConstrain()
+    this.redraw()
+    this.resetModal("init")
 
     // Set the initalized flag to true and call the callback
     this._initialized = true;
@@ -125,9 +126,10 @@ export default class CropprCore {
         newOptions.startPosition = [cropData.x, cropData.y, "%"];
         newOptions.startSize = [cropData.width, cropData.height, "%"];
         newOptions = this.parseOptions(newOptions);
-        newOptions = this.convertOptionsToPixels(newOptions);
- 
+        
+        this.showModal("onResize");
         this.initializeBox(newOptions);
+        this.resetModal("onResize");
         
       }
       window.onresize = function() {
@@ -303,11 +305,12 @@ export default class CropprCore {
     this.imageEl.onload = () => {
       this.getSourceSize();
       this.options = this.parseOptions(this.initOptions);
-      this.convertOptionsToPixels();
+      this.showModal("setImage")
       this.initializeBox(null, false);
       //Temporary FIX, see initialize()
       this.strictlyConstrain();
       this.redraw();
+      this.resetModal("setImage")
       if(callback) callback()
     }
 
@@ -336,6 +339,8 @@ export default class CropprCore {
   initializeBox(opts = null, constrain = true) {
 
     if(opts === null) opts = this.options;
+
+    this.convertOptionsToPixels(opts);
 
     //Define box size
     let boxWidth = opts.startSize.width;
@@ -399,6 +404,55 @@ export default class CropprCore {
     return box;
   }
 
+  showModal(operationName="default") {
+
+    let modalStyle = this.modalStyle
+    if(modalStyle && modalStyle.modalIsDisplayed === true) {
+      return modalStyle
+    }
+
+    if(this.options.modal) {
+      let { modal } = this.options
+
+      let display = modal.currentStyle ? modal.currentStyle.display :
+      getComputedStyle(modal, null).display
+      let visibility =  modal.currentStyle ? modal.currentStyle.visibility :
+      getComputedStyle(modal, null).visibility
+
+      modalStyle = {
+        operationName: operationName,
+        modalIsDisplayed: true,
+        display: display,
+        visibility: visibility
+      }
+      this.modalStyle = modalStyle
+
+      if(display === "none") {
+        modal.style.visibility = "hidden";
+        modal.style.display = "block";
+      }
+    }
+
+    return modalStyle
+
+  }
+
+  resetModal(oldOperationName="default") {
+    let modalStyle = this.modalStyle
+    if(modalStyle) {
+      let { visibility, display, operationName, modalIsDisplayed } = modalStyle
+      if( modalIsDisplayed && oldOperationName === operationName  ) {
+        let { modal } = this.options
+        modal.style.visibility = visibility
+        modal.style.display = display
+        this.modalStyle = {
+          operationName: null,
+          modalIsDisplayed: false
+        }
+      }
+    }
+  }
+
   getSourceSize() {
     //Get raw image dimensions
     this.sourceSize = {};
@@ -409,7 +463,9 @@ export default class CropprCore {
 
   convertor(data, inputMode, outputMode) {
     const convertRealDataToPixel = data => {
+      this.showModal()
       const { width, height } = this.imageEl.getBoundingClientRect();
+      this.resetModal()
       const factorX = this.sourceSize.width / width;
       const factorY = this.sourceSize.height / height;
       if(data.width) {
@@ -427,7 +483,9 @@ export default class CropprCore {
       return data;
     }
     const convertPercentToPixel = data => {
+      this.showModal()
       const { width, height } = this.imageEl.getBoundingClientRect();
+      this.resetModal()
       if (data.width) {
         data.width = (data.width / 100) * width;
       } 
@@ -890,11 +948,13 @@ export default class CropprCore {
   }
 
   getValueAsRealData() {
+    this.showModal()
     const actualWidth = this.imageEl.naturalWidth;
     const actualHeight = this.imageEl.naturalHeight;
     const { width: elementWidth, height: elementHeight } = this.imageEl.getBoundingClientRect();
     const factorX = actualWidth / elementWidth;
     const factorY = actualHeight / elementHeight;
+    this.resetModal()
     return {
       x: Math.round(this.box.x1 * factorX),
       y: Math.round(this.box.y1 * factorY),
@@ -904,7 +964,9 @@ export default class CropprCore {
   }
 
   getValueAsRatio() {
+    this.showModal()
     const { width: elementWidth, height: elementHeight } = this.imageEl.getBoundingClientRect();
+    this.resetModal()
     return {
       x: this.box.x1 / elementWidth,
       y: this.box.y1 / elementHeight,
@@ -931,12 +993,17 @@ export default class CropprCore {
       onCropMove: null,
       onCropEnd: null,
       preview: null,
-      responsive: true
+      responsive: true,
+      modal: null
     }
 
     //Parse preview
     let preview = null;
     if(opts.preview !== null) preview = this.getElement(opts.preview);
+
+    //Parse preview
+    let modal = null;
+    if(opts.modal !== null) modal = this.getElement(opts.modal);
 
     //Parse responsive
     let responsive = null;
@@ -1057,7 +1124,8 @@ export default class CropprCore {
       onCropMove: defaultValue(onCropMove, defaults.onCropMove),
       onCropEnd: defaultValue(onCropEnd, defaults.onCropEnd),
       preview: defaultValue(preview, defaults.preview),
-      responsive: defaultValue(responsive, defaults.responsive)
+      responsive: defaultValue(responsive, defaults.responsive),
+      modal: defaultValue(modal, defaults.modal)
     }
   }
 }

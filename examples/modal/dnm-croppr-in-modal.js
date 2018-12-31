@@ -5,6 +5,7 @@ var croppr = new Croppr("#cropper", {
     aspectRatio: 0.5,
     maxAspectRatio: 1,
     preview: "#cropPreview",
+    modal: "#myModal",
     onInitialize: function(instance) { console.log("INIT", instance) },
     onCropEnd: function(data) { console.log("END", data) },
     onCropStart: function(data) { console.log("START", data) },

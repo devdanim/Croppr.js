@@ -58,6 +58,8 @@ export default class Croppr extends CropprCore {
    */
   moveTo(x, y, constrain = true, mode = "px") {
 
+    this.showModal("moveTo")
+
     if(mode === "%" || mode === "real") {
       let data = this.convertor( {x, y} , mode, "px")
       x = data.x
@@ -68,6 +70,8 @@ export default class Croppr extends CropprCore {
     if(constrain === true) this.strictlyConstrain(null, [0,0]);
     
     this.redraw();
+
+    this.resetModal("moveTo")
 
     // Call the callback
     if (this.options.onCropEnd !== null) {
@@ -84,6 +88,8 @@ export default class Croppr extends CropprCore {
    *      Defaults to [0.5, 0.5] (center).
    */
   resizeTo(width, height, origin = null, constrain = true, mode = "px") {
+
+    this.showModal("resize")
 
     if(mode === "%" || mode === "real") {
       let data = {
@@ -102,6 +108,8 @@ export default class Croppr extends CropprCore {
 
     this.redraw();
 
+    this.resetModal("resize")
+
     // Call the callback
     if (this.options.onCropEnd !== null) {
       this.options.onCropEnd(this.getValue());
@@ -110,10 +118,20 @@ export default class Croppr extends CropprCore {
   }
 
   setValue(data, constrain = true, mode = "%") {
-    if(mode === "%" || mode === "real") data = this.convertor(data, mode, "px")
+
+    this.showModal("setValue")
+
+    if(mode === "%" || mode === "real") {
+      data = this.convertor(data, mode, "px")
+    }
+
     this.moveTo(data.x, data.y, false)
     this.resizeTo(data.width, data.height, [0,0], constrain)
+
+    this.resetModal("setValue")
+    
     return this
+
   }
 
   /**
@@ -126,9 +144,11 @@ export default class Croppr extends CropprCore {
 
     if(origin === null) origin = [.5, .5];
     
+    this.showModal("scaleBy")
     this.box.scale(factor, origin);
     if(constrain === true) this.strictlyConstrain();
     this.redraw();
+    this.resetModal("scaleBy")
 
     // Call the callback
     if (this.options.onCropEnd !== null) {
@@ -141,8 +161,13 @@ export default class Croppr extends CropprCore {
    * Resets the crop region to the initial settings.
    */
   reset() {
+
+    this.showModal("reset")
+
     this.box = this.initializeBox(this.options);
     this.redraw();
+
+    this.resetModal("reset")
 
     // Call the callback
     if (this.options.onCropEnd !== null) {

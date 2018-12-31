@@ -13,6 +13,7 @@
 
 * Live preview 
 * Responsive
+* Works seamlessly with modal, just add your modal in the options
 * Min and Max aspect ratio
 * Set startPosition
 * Set crop data with real image px values (for options : startSize, startPosition, minSize, maxSize + methods : moveTo(), resizeTo(), setValue())
@@ -108,6 +109,24 @@ Constrain the crop region to a minimum size.
 - Example: `minSize: [20, 20, 'px', true]` (A minimum width and height of 20px, relative to source image size)
 
 
+#### **modal**
+
+If you use dnm-croppr inside a modal, you have to define your modal parent element here.
+
+* Type: `String` or `Element`
+* Default: `null`
+* Possible values: If modal ID is "myModal", value can be `"#myModal"` or an `Element` object as `document.getElementById("myModal")`
+
+
+#### **preview**
+
+Define the container for live preview.
+
+* Type: `String` or `Element`
+* Default: `null`
+* Possible values: If container ID is "preview", value can be `"#preview"` or an `Element` object as `document.getElementById("preview")`
+
+
 #### **startSize**
 
 The starting size of the crop region when it is initialized.
@@ -195,14 +214,6 @@ Define how the crop region should be calculated.
   * `ratio` returns the crop region values as a ratio between 0 to 1. e.g. For example, an `x, y` position at the center will be `{x: 0.5, y: 0.5}`.
   * `raw` returns the crop region values as is based on the size of the Croppr element.
 
-
-#### **preview**
-
-Define the container for live preview.
-
-* Type: `String` or `Element`
-* Default: `null`
-* Possible values: If container ID is "preview", value can be `"#preview"` or an `Element` object as `document.getElementById("preview")`
 
 
 ## Methods
