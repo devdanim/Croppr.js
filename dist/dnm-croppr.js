@@ -492,6 +492,12 @@
         deltaY = deltaY > maxDelta ? maxDelta : deltaY;
         deltaY = 1 + coeff * deltaY;
         this.scaleBy(deltaY);
+        if (this.options.onCropMove !== null) {
+          this.options.onCropMove(this.getValue());
+        }
+        if (this.options.onCropStart !== null) {
+          this.options.onCropStart(this.getValue());
+        }
       };
       if (this.options.responsive) {
         let onResize;

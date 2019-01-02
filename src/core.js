@@ -101,6 +101,7 @@ export default class CropprCore {
     
     this.cropperEl.onwheel = event => {
       event.preventDefault();
+
       let { deltaY } = event;
       const maxDelta = 0.05;
       let coeff = deltaY > 0 ? 1 : -1;
@@ -108,6 +109,15 @@ export default class CropprCore {
       deltaY = deltaY > maxDelta ? maxDelta : deltaY
       deltaY = 1 + coeff*deltaY;
       this.scaleBy(deltaY);
+
+      // Trigger callback
+      if(this.options.onCropMove !== null) {
+        this.options.onCropMove(this.getValue());
+      } 
+      if(this.options.onCropStart !== null) {
+        this.options.onCropStart(this.getValue());
+      }
+
     }
 
 
