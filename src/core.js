@@ -152,6 +152,8 @@ export default class CropprCore {
 
   }
 
+
+
   //Return element by html element or string
   getElement(element, type) {
     if(element) {
@@ -321,6 +323,9 @@ export default class CropprCore {
       this.strictlyConstrain();
       this.redraw();
       this.resetModal("setImage")
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
       if(callback) callback()
     }
 
