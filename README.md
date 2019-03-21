@@ -165,7 +165,7 @@ onCropStart: function(data) {
 
 #### **onCropMove**
 
-A callback function that is called when the crop region is changing.
+A callback function that is called when the user is changing the crop region.
 
 * Type: `Function`
 * Arguments: `data = {x, y, width, height}`
@@ -178,7 +178,7 @@ onCropMove: function(data) {
 
 #### **onCropEnd**
 
-A callback function that is called when the user stops modifying the crop region. **onCropEnd** is also called with methods **setImage()**, **moveTo()**, **resizeTo()**, **setValue()**, **scaleBy()**, **reset()**.
+A callback function that is called when the modification of the crop region is finished (by the user, or programmatically). **onCropEnd** is called with methods **setImage()**, **moveTo()**, **resizeTo()**, **setValue()**, **scaleBy()**, **reset()**.
 
 * Type: `Function`
 * Arguments: `data = {x, y, width, height}`
