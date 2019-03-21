@@ -323,6 +323,9 @@ export default class CropprCore {
       this.strictlyConstrain();
       this.redraw();
       this.resetModal("setImage")
+      if (this.options.onCropEnd !== null) {
+        this.options.onCropEnd(this.getValue());
+      }
       if(callback) callback()
     }
 
