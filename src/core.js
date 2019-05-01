@@ -129,8 +129,7 @@ export default class CropprCore {
 
         const controlKeys = ["x","y","width","height"];
         for(var i=0; i<controlKeys.length; i++) {
-          cropData[controlKeys[i]] *= 100;
-          cropData[controlKeys[i]] = cropData[controlKeys[i]] > 100 ? 100 : cropData[controlKeys[i]] < 0 ? 0 : cropData[controlKeys[i]];
+          cropData[controlKeys[i]] = cropData[controlKeys[i]] > 1 ? 1 : cropData[controlKeys[i]] < 0 ? 0 : cropData[controlKeys[i]];
         }
 
         newOptions.startPosition = [cropData.x, cropData.y, "ratio"];
