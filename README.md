@@ -94,9 +94,9 @@ If maxAspectRatio and aspectRatio aren't null, the crop region is constrained be
 
 Constrain the crop region to a maximum size.
 
-* Type: `[width, height, unit?, real?]`
+* Type: `[width, height, unit?]`
 * Default: `null`
-* Example: `maxSize: [50, 50, '%', false]` (A maximum size of 50% of the image size)
+* Example: `maxSize: [0.5, 0.5, 'ratio']` (A maximum size of 50% of the image size)
 
 
 
@@ -104,9 +104,9 @@ Constrain the crop region to a maximum size.
 
 Constrain the crop region to a minimum size.
 
-- Type: `[width, height, unit?, real?]`
+- Type: `[width, height, unit?]`
 - Default: `null`
-- Example: `minSize: [20, 20, 'px', true]` (A minimum width and height of 20px, relative to source image size)
+- Example: `minSize: [20, 20, 'real']` (A minimum width and height of 20px, relative to source image size)
 
 
 #### **modal**
@@ -131,23 +131,21 @@ Define the container for live preview.
 
 The starting size of the crop region when it is initialized.
 
-- Type: `[width, height, unit?, real?]`
-- Default: `[100, 100, '%', false]` (A starting crop region as large as possible)
-- Example: `startSize: [50, 50]` (A starting crop region of 50% of the image size)
+- Type: `[width, height, unit?]`
+- Default: `[1, 1, 'ratio']` (A starting crop region as large as possible)
+- Example: `startSize: [0.5, 0.5]` (A starting crop region of 50% of the image size)
 
 
 #### **startPosition**
 
 The starting position of the crop region when it is initialized.
 
-- Type: `[width, height, unit?, real?]`
+- Type: `[width, height, unit?]`
 - Default: `null` (Crop region is centered)
-- Example: `startSize: [250, 100, "px", true]` (A starting crop region positioned at 250 px from left, and 100 px from top, relative to source image size)
+- Example: `startSize: [250, 100, "real"]` (A starting crop region positioned at 250 px from left, and 100 px from top, relative to source image size)
 
 
-_Note: `unit` accepts a value of **'px'** or **'%'**. Defaults to **'px'**._
-
-_If `real` is true and `unit` is **'px'**, size is based on source image. If `real` is false, size is based on croppr container. Defaults to **false**._
+_Note: `unit` accepts a value of **'raw'**, **'ratio'** or **'real'**. Defaults to **'raw'**._
 
 
 #### **onCropStart**
@@ -244,7 +242,7 @@ Moves the crop region to the specified coordinates. Returns the Croppr instance.
 
 _Note: If `constrain` is **false**, crop region isn't limited by options. Default value is **true**._
 
-_`mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
+_`mode` can be **'raw'**, **'ratio'**, **'real'**. Default value is **'raw'**._
 
 #### resizeTo(width: number, height: number, _origin?: Array_, _constrain?: boolean_, _mode?: string_)
 
@@ -254,7 +252,7 @@ _Note: `origin` default value is **[.5, .5]**._
 
 _If `constrain` is **false**, crop region isn't limited by options. Default value is **true**._
 
-_`mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
+_`mode` can be **'raw'**, **'ratio'**, **'real'**. Default value is **'raw'**._
 
 #### setValue(data: Array, _constrain?: boolean_, _mode?: string_)
 
@@ -273,7 +271,7 @@ cropInstance.setValue(cropData, true, "real");
 
 _Note: If `constrain` is **false**, crop region isn't limited by options. Default value is **true**._
 
-_`mode` can be **'px'**, **'%'**, **'real'**. Default value is **'px'**._
+_`mode` can be **'raw'**, **'ratio'**, **'real'**. Default value is **'raw'**._
 
 
 #### scaleBy(factor: number, _origin?: Array_)

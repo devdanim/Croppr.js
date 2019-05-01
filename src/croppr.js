@@ -56,12 +56,12 @@ export default class Croppr extends CropprCore {
    * @param {Number} x
    * @param {Number} y
    */
-  moveTo(x, y, constrain = true, mode = "px") {
+  moveTo(x, y, constrain = true, mode = "raw") {
 
     this.showModal("moveTo")
 
-    if(mode === "%" || mode === "real") {
-      let data = this.convertor( {x, y} , mode, "px")
+    if(mode === "ratio" || mode === "real") {
+      let data = this.convertor( {x, y} , mode, "raw")
       x = data.x
       y = data.y
     }
@@ -87,16 +87,16 @@ export default class Croppr extends CropprCore {
    * @param {Array} origin The origin point to resize from.
    *      Defaults to [0.5, 0.5] (center).
    */
-  resizeTo(width, height, origin = null, constrain = true, mode = "px") {
+  resizeTo(width, height, origin = null, constrain = true, mode = "raw") {
 
     this.showModal("resize")
 
-    if(mode === "%" || mode === "real") {
+    if(mode === "ratio" || mode === "real") {
       let data = {
         width: width,
         height: height
       }
-      data = this.convertor( data, mode, "px")
+      data = this.convertor( data, mode, "raw")
       width = data.width
       height = data.height
     }
@@ -117,12 +117,12 @@ export default class Croppr extends CropprCore {
     return this;
   }
 
-  setValue(data, constrain = true, mode = "%") {
+  setValue(data, constrain = true, mode = "ratio") {
 
     this.showModal("setValue")
 
-    if(mode === "%" || mode === "real") {
-      data = this.convertor(data, mode, "px")
+    if(mode === "ratio" || mode === "real") {
+      data = this.convertor(data, mode, "raw")
     }
 
     this.moveTo(data.x, data.y, false)

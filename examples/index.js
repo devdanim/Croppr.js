@@ -1,7 +1,7 @@
 var croppr = new Croppr("#cropper", {
     returnMode: "ratio",
     responsive: true,
-    startSize: [500, 800, "px", true],
+    startSize: [700, 700, "real"],
     aspectRatio: 0.5,
     maxAspectRatio: 1,
     preview: "#cropPreview",
