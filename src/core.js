@@ -6,6 +6,7 @@
 import Handle from './handle';
 import Box from './box';
 import enableTouch from './touch';
+import FastAverageColor from 'fast-average-color';
 
 /**
  * Define a list of handles to create.
@@ -179,8 +180,10 @@ export default class CropprCore {
 
     // Create image element
     this.imageEl = document.createElement('img');
+    this.imageEl.setAttribute('crossOrigin', 'anonymous');
     this.imageEl.setAttribute('src', targetEl.getAttribute('src'));
     this.imageEl.setAttribute('alt', targetEl.getAttribute('alt'));
+
     this.imageEl.className = 'croppr-image';
 
     // Create clipped image element
@@ -313,6 +316,14 @@ export default class CropprCore {
   setImage(src, callback) {
     // Add onload listener to reinitialize box
     this.imageEl.onload = () => {
+      const fac = new FastAverageColor();
+      const color = fac.getColor(this.imageEl);
+      if (color) {
+        this.isDark = color.isDark;
+        if(this.isDark) this.cropperEl.className = "croppr croppr-dark";
+        else this.cropperEl.className = "croppr croppr-light";
+      }
+
       this.getSourceSize();
       this.options = this.parseOptions(this.initOptions);
       this.showModal("setImage")

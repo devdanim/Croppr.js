@@ -1,6 +1,6 @@
 {
   "name": "dnm-croppr",
-  "version": "2.6.3",
+  "version": "2.7.0",
   "description": "A fork of original Croppr.js, a vanilla JavaScript image cropper, with advanced options.",
   "main": "src/index.js",
   "scripts": {
@@ -35,11 +35,15 @@
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
     "clean-css-cli": "^4.2.1",
-    "onchange": "^5.2.0",
-    "rollup": "^1.0.0",
+    "onchange": "^7.1.0",
+    "rollup": "^1.32.1",
     "rollup-plugin-babel": "^4.2.0",
     "rollup-plugin-cleanup": "^3.1.0",
-    "rollup-plugin-postcss": "^1.6.3",
-    "rollup-plugin-terser": "^3.0.0"
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-postcss": "^2.0.3",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "dependencies": {
+    "fast-average-color": "^6.3.0"
   }
 }

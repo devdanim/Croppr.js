@@ -1,6 +1,7 @@
 import babel from 'rollup-plugin-babel';
-import postcss from 'rollup-plugin-postcss';
 import { terser } from "rollup-plugin-terser";
+import postcss from 'rollup-plugin-postcss';
+import resolve from 'rollup-plugin-node-resolve';
 
 
 var banner = `/**
@@ -24,14 +25,18 @@ export default {
     file: 'dist/dnm-croppr.min.js',
     format: 'umd',
     name: 'Croppr',
-    banner: banner
+    banner: banner,
+    globals: {
+      'fast-average-color': 'FastAverageColor',
+    }
   },
-  plugins: [ 
-  	postcss({
-  		extensions: [ '.css' ],
+  plugins: [
+    resolve(),
+    postcss({
+      extensions: [ '.css' ],
       extract: "dist/dnm-croppr.css"
     }),
-  	babel(),
+    babel(),
     terser()
   ]
 };
