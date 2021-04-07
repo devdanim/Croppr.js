@@ -1,6 +1,6 @@
 {
   "name": "dnm-croppr",
-  "version": "2.7.2",
+  "version": "2.7.3",
   "description": "A fork of original Croppr.js, a vanilla JavaScript image cropper, with advanced options.",
   "main": "src/index.js",
   "scripts": {
